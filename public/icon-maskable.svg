@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40" width="40" height="40">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f08a2b"/>
+      <stop offset="1" stop-color="#f43f7e"/>
+    </linearGradient>
+  </defs>
+  <!-- Maskable icons are cropped to a safe zone of the middle 80%, so the mark
+       is drawn smaller and the background covers the whole canvas. -->
+  <rect width="40" height="40" fill="#0b0906"/>
+  <g fill="url(#g)" transform="translate(20 20) scale(0.72) translate(-20 -20)">
+    <rect x="8.5" y="16" width="3" height="8" rx="1.5"/>
+    <rect x="13.5" y="12" width="3" height="16" rx="1.5"/>
+    <rect x="18.5" y="8" width="3" height="24" rx="1.5"/>
+    <rect x="23.5" y="12" width="3" height="16" rx="1.5"/>
+    <rect x="28.5" y="16" width="3" height="8" rx="1.5"/>
+  </g>
+</svg>

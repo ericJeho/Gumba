@@ -1,0 +1,46 @@
+{
+  "name": "Pulse Studios",
+  "short_name": "Pulse",
+  "description": "Where Sound Becomes Emotion. Recording, mixing, mastering, Dolby Atmos, podcasts and artist development.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b0906",
+  "theme_color": "#0b0906",
+  "categories": ["music", "business", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a session",
+      "short_name": "Book",
+      "description": "Check live availability and hold a room",
+      "url": "/book"
+    },
+    {
+      "name": "Our work",
+      "short_name": "Work",
+      "description": "Listen to records made at the studio",
+      "url": "/work"
+    },
+    {
+      "name": "Contact",
+      "short_name": "Contact",
+      "description": "Call, message or visit the studio",
+      "url": "/contact"
+    }
+  ]
+}
