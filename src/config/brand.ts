@@ -44,12 +44,21 @@ export type OpeningHours = {
   closes: string;
 };
 
-const env = (key: string, fallback: string) => process.env[key]?.trim() || fallback;
+/**
+ * Applies an environment override.
+ *
+ * Every call site must pass `process.env.NEXT_PUBLIC_X` as a *literal member
+ * expression*, never a dynamic `process.env[key]` lookup. Next.js inlines these
+ * by textual substitution at build time, and a computed key cannot be
+ * substituted — it silently becomes `undefined` in the browser bundle, so the
+ * override appears to work on the server and does nothing on the client.
+ */
+const override = (value: string | undefined, fallback: string) => value?.trim() || fallback;
 
 export const brand = {
-  name: env('NEXT_PUBLIC_STUDIO_NAME', 'Pulse Studios'),
-  legalName: env('NEXT_PUBLIC_STUDIO_LEGAL_NAME', 'Pulse Studios Ltd.'),
-  tagline: env('NEXT_PUBLIC_STUDIO_TAGLINE', 'Where Sound Becomes Emotion.'),
+  name: override(process.env.NEXT_PUBLIC_STUDIO_NAME, 'Pulse Studios'),
+  legalName: override(process.env.NEXT_PUBLIC_STUDIO_LEGAL_NAME, 'Pulse Studios Ltd.'),
+  tagline: override(process.env.NEXT_PUBLIC_STUDIO_TAGLINE, 'Where Sound Becomes Emotion.'),
   description:
     'A world-class music production studio. Recording, mixing, mastering, Dolby Atmos, ' +
     'songwriting, podcasts and artist development — under one roof, with the engineers ' +
@@ -63,14 +72,14 @@ export const brand = {
    */
   logo: {
     /** Optional image path in /public; when set it replaces the drawn mark. */
-    src: env('NEXT_PUBLIC_STUDIO_LOGO', ''),
+    src: override(process.env.NEXT_PUBLIC_STUDIO_LOGO, ''),
     alt: 'Pulse Studios',
   },
 
   contact: {
-    email: env('NEXT_PUBLIC_STUDIO_EMAIL', 'bookings@pulsestudios.com'),
+    email: override(process.env.NEXT_PUBLIC_STUDIO_EMAIL, 'bookings@pulsestudios.com'),
     pressEmail: 'press@pulsestudios.com',
-    phone: env('NEXT_PUBLIC_STUDIO_PHONE', '+1 (212) 555-0180'),
+    phone: override(process.env.NEXT_PUBLIC_STUDIO_PHONE, '+1 (212) 555-0180'),
     /** E.164, for tel: and WhatsApp deep links. */
     phoneRaw: '+12125550180',
     whatsapp: '12125550180',
@@ -161,7 +170,7 @@ export const brand = {
   currency: 'USD',
 
   /** Used for canonical URLs, sitemaps, Open Graph and structured data. */
-  url: env('NEXT_PUBLIC_SITE_URL', 'http://localhost:3100'),
+  url: override(process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000'),
 
   /** Shown on the booking summary and used by the deposit calculator. */
   booking: {

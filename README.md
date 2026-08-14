@@ -62,6 +62,27 @@ NEXT_PUBLIC_STUDIO_TAGLINE="Records that last."
 NEXT_PUBLIC_STUDIO_LOGO="/harbour-mark.svg"
 ```
 
+These are read as literal `process.env.NEXT_PUBLIC_*` expressions so Next can
+inline them at build time. A dynamic `process.env[key]` lookup cannot be
+substituted and silently resolves to `undefined` in the browser bundle — which
+is why `src/config/brand.ts` never uses one.
+
+## Deploying
+
+The app auto-detects its own public origin at build time, so canonical tags, the
+sitemap, Open Graph URLs and the JSON-LD are correct without any configuration:
+
+1. `NEXT_PUBLIC_SITE_URL` if you set it — use this for a custom domain.
+2. Vercel's `VERCEL_PROJECT_PRODUCTION_URL` for production builds.
+3. `VERCEL_URL` for preview builds.
+4. `http://localhost:3000` locally.
+
+The service worker's cache version comes from the commit SHA on Vercel, so each
+deploy invalidates the previous build's cached shell.
+
+Nothing else needs setting. `output: 'standalone'` is switched off automatically
+when `VERCEL` is present, and every integration in `.env.example` is optional.
+
 ## Content
 
 The site is data-driven. Six files under `src/content/` supply every page:

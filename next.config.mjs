@@ -1,3 +1,41 @@
+/**
+ * The canonical origin, resolved at build time.
+ *
+ * Canonical tags, the sitemap, Open Graph URLs and the JSON-LD all derive from
+ * this. Left at the localhost default, a deployed site publishes a sitemap full
+ * of `http://localhost:3000` URLs and social cards that resolve to nothing — so
+ * the deployment platform's own domain is used when nothing explicit is set.
+ *
+ * Precedence: an explicit NEXT_PUBLIC_SITE_URL (a custom domain) beats
+ * everything; then Vercel's stable production domain; then the per-deployment
+ * URL, which is what preview builds get; then localhost for local development.
+ */
+function siteUrl() {
+  const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (explicit) return explicit;
+
+  const production = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (production) return `https://${production}`;
+
+  const deployment = process.env.VERCEL_URL?.trim();
+  if (deployment) return `https://${deployment}`;
+
+  return 'http://localhost:3000';
+}
+
+/**
+ * A value that changes on every deploy, used to version the service worker's
+ * caches. The commit SHA is the right one where it exists; the timestamp is a
+ * fallback so a local production build still gets a fresh worker.
+ */
+function buildId() {
+  return (
+    process.env.NEXT_PUBLIC_BUILD_ID?.trim() ||
+    process.env.VERCEL_GIT_COMMIT_SHA?.trim()?.slice(0, 12) ||
+    Date.now().toString(36)
+  );
+}
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
@@ -8,12 +46,11 @@ const nextConfig = {
   ...(process.env.VERCEL ? {} : { output: 'standalone' }),
 
   env: {
-    // Baked in at build time and used to version the service worker's caches.
-    // Without a value that changes per deploy, a returning visitor can be
-    // handed a cached HTML shell that references chunk files the new build no
-    // longer has — a page that loads and then fails to hydrate. CI should set
-    // this to the commit SHA; the timestamp is the fallback.
-    NEXT_PUBLIC_BUILD_ID: process.env.NEXT_PUBLIC_BUILD_ID ?? Date.now().toString(36),
+    // Both are resolved on the build machine, where the platform's system
+    // variables exist, and inlined into the bundle — so the browser gets the
+    // right values without them having to be set by hand in the dashboard.
+    NEXT_PUBLIC_SITE_URL: siteUrl(),
+    NEXT_PUBLIC_BUILD_ID: buildId(),
   },
 
   images: {
