@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
@@ -43,12 +44,17 @@ import { brand } from '@/config/brand';
  */
 export function PlayerBar() {
   const player = usePlayer();
+  const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
   const [panel, setPanel] = useState<'queue' | 'lyrics'>('queue');
   const { copied, copy } = useCopy();
 
   const { current } = player;
   if (!current) return null;
+
+  // The studio has its own transport, its own meters and its own Space
+  // binding. Two players on one screen is a bug, not a feature.
+  if (pathname.startsWith('/studio')) return null;
 
   const progress = player.duration > 0 ? player.position / player.duration : 0;
   const isFavourite = player.favourites.includes(current.id);

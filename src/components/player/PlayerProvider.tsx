@@ -434,6 +434,8 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      // The studio owns the transport keys while it is open.
+      if (window.location.pathname.startsWith('/studio')) return;
 
       if (event.code === 'Space') {
         event.preventDefault();

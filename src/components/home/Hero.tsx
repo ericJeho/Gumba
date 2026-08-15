@@ -2,8 +2,8 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, PlayCircle, Video } from 'lucide-react';
-import { brand } from '@/config/brand';
+import { PlayCircle, Sliders, Video } from 'lucide-react';
+
 import { cn } from '@/lib/cn';
 import { useReducedMotion } from '@/lib/hooks';
 import { Button } from '@/components/ui';
@@ -93,30 +93,30 @@ export function Hero() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-success opacity-70" />
               <span className="relative inline-flex size-2 rounded-full bg-success" />
             </span>
-            Nine rooms · Booking {new Date().getFullYear()} sessions now
+            Free forever · No account · Runs in your browser
           </span>
 
           {/* Capped at 7xl: at 8xl the first line no longer fits the measure and
               the deliberate two-line break turns into a ragged three. */}
           <h1 className="mt-7 font-display text-5xl font-semibold leading-[0.98] sm:text-6xl lg:text-7xl">
-            Crafting hits that
+            A whole studio.
             <br />
-            <span className="text-gradient">move the world.</span>
+            <span className="text-gradient">In your browser. Free.</span>
           </h1>
 
           <p className="mt-7 max-w-2xl text-lg leading-relaxed text-ink-muted md:text-xl">
-            Professional music production, recording, mixing, mastering, songwriting, Dolby Atmos
-            mixing, podcasts, voiceovers and artist development — in one building, with the
-            engineers who made the records you already know.
+            Make beats, write melodies, record vocals, mix and master — then export a WAV you
+            own. No download, no account, no watermark, no trial that runs out. And when a record
+            needs a real room, our engineers are here too.
           </p>
 
           <div className="mt-10 flex flex-wrap items-center gap-3">
-            <Button href="/book" size="lg">
-              <Calendar className="size-4" />
-              Book studio
+            <Button href="/studio" size="lg">
+              <Sliders className="size-4" />
+              Open the studio
             </Button>
-            <Button href="/contact" variant="outline" size="lg">
-              Start your project
+            <Button href="/services" variant="outline" size="lg">
+              Work with our engineers
             </Button>
             <Button
               variant="glass"
@@ -134,10 +134,10 @@ export function Hero() {
 
           <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-8 sm:grid-cols-4">
             {[
-              { value: `${new Date().getFullYear() - brand.founded}`, label: 'Years running' },
-              { value: '1,200+', label: 'Records finished' },
-              { value: '9', label: 'Rooms' },
-              { value: '1', label: 'Grammy' },
+              { value: '14', label: 'Instruments' },
+              { value: '£0', label: 'Forever' },
+              { value: 'WAV', label: 'Export' },
+              { value: '0', label: 'Sign-ups' },
             ].map((stat) => (
               <div key={stat.label}>
                 <dt className="sr-only">{stat.label}</dt>

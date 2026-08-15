@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { Calendar, Menu, Moon, Search, Sun, X } from 'lucide-react';
+import { Menu, Moon, Search, Sliders, Sun, X } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { brand } from '@/config/brand';
 import { useDismissable, useScrollLock, useScrollPosition } from '@/lib/hooks';
@@ -29,6 +29,7 @@ type NavItem = {
 };
 
 const NAV: NavItem[] = [
+  { label: 'Studio', href: '/studio' },
   {
     label: 'Services',
     href: '/services',
@@ -42,7 +43,7 @@ const NAV: NavItem[] = [
     ],
   },
   {
-    label: 'Studio',
+    label: 'The building',
     href: '/rooms',
     children: [
       { label: 'Rooms', href: '/rooms', description: 'Nine spaces, virtual tours and live availability' },
@@ -193,9 +194,9 @@ export function Nav() {
               {theme === 'dark' ? <Sun className="size-4" /> : <Moon className="size-4" />}
             </button>
 
-            <Button href="/book" size="sm" className="hidden sm:inline-flex">
-              <Calendar className="size-4" />
-              Book studio
+            <Button href="/studio" size="sm" className="hidden sm:inline-flex">
+              <Sliders className="size-4" />
+              Open studio
             </Button>
 
             <button
@@ -253,9 +254,9 @@ export function Nav() {
               ))}
 
               <div className="mt-8 grid gap-3">
-                <Button href="/book" size="lg">
-                  <Calendar className="size-4" />
-                  Book a session
+                <Button href="/studio" size="lg">
+                  <Sliders className="size-4" />
+                  Open the studio
                 </Button>
                 <Button href={`tel:${brand.contact.phoneRaw}`} variant="outline" size="lg">
                   {brand.contact.phone}

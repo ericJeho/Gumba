@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { MessageCircle, Send, X } from 'lucide-react';
@@ -144,6 +145,7 @@ const GREETING: Message = {
 };
 
 export function ChatAssistant() {
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([GREETING]);
   const [draft, setDraft] = useState('');
@@ -190,6 +192,10 @@ export function ChatAssistant() {
       return [...current, userMessage, reply];
     });
   };
+
+  // The studio needs its full width; a floating bubble over the mixer is in
+  // the way rather than in reach.
+  if (pathname.startsWith('/studio')) return null;
 
   return (
     <>
