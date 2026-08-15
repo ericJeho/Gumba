@@ -5,6 +5,7 @@ import { articleSchema, breadcrumbSchema, jsonLd, pageMetadata } from '@/lib/seo
 import { formatDate } from '@/lib/format';
 import { getPost, posts, relatedPosts, POST_CATEGORIES, type Block } from '@/content/posts';
 import { team } from '@/content/people';
+import { brand } from '@/config/brand';
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: post.slug }));
@@ -139,7 +140,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               ) : (
                 <span className="text-sm font-medium">{post.author}</span>
               )}
-              <p className="text-xs text-ink-subtle">{author?.role ?? 'Pulse Studios'}</p>
+              <p className="text-xs text-ink-subtle">{author?.role ?? brand.name}</p>
             </div>
           </div>
 

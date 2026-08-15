@@ -135,7 +135,7 @@ export function Hero() {
           <dl className="mt-16 grid max-w-2xl grid-cols-2 gap-8 sm:grid-cols-4">
             {[
               { value: '14', label: 'Instruments' },
-              { value: '£0', label: 'Forever' },
+              { value: '$0', label: 'Forever' },
               { value: 'WAV', label: 'Export' },
               { value: '0', label: 'Sign-ups' },
             ].map((stat) => (

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Eraser, Music4 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useProject } from '@/daw/store';
@@ -33,6 +33,28 @@ export function PianoRoll() {
 
   const track = project.tracks.find((entry) => entry.id === selectedTrackId);
   const totalSteps = project.bars * STEPS_PER_BAR;
+
+  // Follow the selection to where its notes actually are. A bass part sits two
+  // octaves below a lead, so a fixed window shows an empty grid for a channel
+  // that is plainly playing — the roll looks broken when it is merely scrolled
+  // somewhere else. Only on a change of channel, so a manual scroll sticks.
+  const notes = track?.notes;
+  useEffect(() => {
+    if (!notes?.length) return;
+
+    const lowestNote = Math.min(...notes.map((note) => note.pitch));
+    const highestNote = Math.max(...notes.map((note) => note.pitch));
+
+    // Centre the part in the window when it fits, otherwise show it from the
+    // bottom up — the root of a chord is more use than the top of it.
+    const centred = Math.round((lowestNote + highestNote) / 2 - VISIBLE_PITCHES / 2);
+    const anchored = highestNote - lowestNote >= VISIBLE_PITCHES ? lowestNote - 1 : centred;
+
+    setLowest(Math.max(0, Math.min(127 - VISIBLE_PITCHES, anchored)));
+    // Deliberately keyed on the track only: re-running as notes are placed
+    // would yank the grid out from under the pointer mid-edit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTrackId]);
 
   const pitches = useMemo(
     () => Array.from({ length: VISIBLE_PITCHES }, (_, index) => lowest + VISIBLE_PITCHES - 1 - index),

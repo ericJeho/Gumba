@@ -10,6 +10,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { brand } from '@/config/brand';
 import { tracks as catalogue, type Track } from '@/content/work';
 import { useLocalStorage } from '@/lib/hooks';
 import { PREVIEW_DURATION, renderPreview } from '@/components/player/synth';
@@ -460,7 +461,7 @@ export function PlayerProvider({ children }: { children: ReactNode }) {
     navigator.mediaSession.metadata = new MediaMetadata({
       title: current.title,
       artist: current.artist,
-      album: 'Pulse Studios',
+      album: brand.name,
     });
 
     navigator.mediaSession.setActionHandler('play', () => play());

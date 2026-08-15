@@ -56,13 +56,14 @@ export type OpeningHours = {
 const override = (value: string | undefined, fallback: string) => value?.trim() || fallback;
 
 export const brand = {
-  name: override(process.env.NEXT_PUBLIC_STUDIO_NAME, 'Pulse Studios'),
-  legalName: override(process.env.NEXT_PUBLIC_STUDIO_LEGAL_NAME, 'Pulse Studios Ltd.'),
-  tagline: override(process.env.NEXT_PUBLIC_STUDIO_TAGLINE, 'Where Sound Becomes Emotion.'),
+  name: override(process.env.NEXT_PUBLIC_STUDIO_NAME, 'Gumba'),
+  legalName: override(process.env.NEXT_PUBLIC_STUDIO_LEGAL_NAME, 'Gumba Sound Ltd.'),
+  tagline: override(process.env.NEXT_PUBLIC_STUDIO_TAGLINE, 'The studio is a tab away.'),
   description:
-    'A world-class music production studio. Recording, mixing, mastering, Dolby Atmos, ' +
-    'songwriting, podcasts and artist development — under one roof, with the engineers ' +
-    'who made the records you know.',
+    'A producer’s studio, free in your browser. Make beats, write with the piano roll, ' +
+    'record takes, mix every channel and master the result — then export the WAV. ' +
+    'No account, no upload, no paid tier. The room and the engineers are here too, ' +
+    'for when you want another pair of hands on it.',
   founded: 2009,
 
   /**
@@ -73,12 +74,12 @@ export const brand = {
   logo: {
     /** Optional image path in /public; when set it replaces the drawn mark. */
     src: override(process.env.NEXT_PUBLIC_STUDIO_LOGO, ''),
-    alt: 'Pulse Studios',
+    alt: 'Gumba',
   },
 
   contact: {
-    email: override(process.env.NEXT_PUBLIC_STUDIO_EMAIL, 'bookings@pulsestudios.com'),
-    pressEmail: 'press@pulsestudios.com',
+    email: override(process.env.NEXT_PUBLIC_STUDIO_EMAIL, 'hello@gumba.studio'),
+    pressEmail: 'press@gumba.studio',
     phone: override(process.env.NEXT_PUBLIC_STUDIO_PHONE, '+1 (212) 555-0180'),
     /** E.164, for tel: and WhatsApp deep links. */
     phoneRaw: '+12125550180',
@@ -106,12 +107,12 @@ export const brand = {
   ] satisfies OpeningHours[],
 
   socials: [
-    { label: 'Instagram', href: 'https://instagram.com/pulsestudios', icon: 'instagram' },
-    { label: 'YouTube', href: 'https://youtube.com/@pulsestudios', icon: 'youtube' },
-    { label: 'TikTok', href: 'https://tiktok.com/@pulsestudios', icon: 'tiktok' },
-    { label: 'Spotify', href: 'https://open.spotify.com/user/pulsestudios', icon: 'spotify' },
-    { label: 'LinkedIn', href: 'https://linkedin.com/company/pulsestudios', icon: 'linkedin' },
-    { label: 'X', href: 'https://x.com/pulsestudios', icon: 'x' },
+    { label: 'Instagram', href: 'https://instagram.com/gumbastudio', icon: 'instagram' },
+    { label: 'YouTube', href: 'https://youtube.com/@gumbastudio', icon: 'youtube' },
+    { label: 'TikTok', href: 'https://tiktok.com/@gumbastudio', icon: 'tiktok' },
+    { label: 'Spotify', href: 'https://open.spotify.com/user/gumbastudio', icon: 'spotify' },
+    { label: 'LinkedIn', href: 'https://linkedin.com/company/gumbastudio', icon: 'linkedin' },
+    { label: 'X', href: 'https://x.com/gumbastudio', icon: 'x' },
   ] satisfies SocialLink[],
 
   /**

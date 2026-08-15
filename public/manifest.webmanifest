@@ -1,14 +1,14 @@
 {
-  "name": "Pulse Studios",
-  "short_name": "Pulse",
-  "description": "Where Sound Becomes Emotion. Recording, mixing, mastering, Dolby Atmos, podcasts and artist development.",
+  "name": "Gumba",
+  "short_name": "Gumba",
+  "description": "A producer's studio, free in your browser. Beats, piano roll, recording, mixing, mastering and WAV export — no account, no upload.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0b0906",
   "theme_color": "#0b0906",
-  "categories": ["music", "business", "productivity"],
+  "categories": ["music", "productivity", "entertainment"],
   "icons": [
     {
       "src": "/icon.svg",
@@ -25,10 +25,10 @@
   ],
   "shortcuts": [
     {
-      "name": "Book a session",
-      "short_name": "Book",
-      "description": "Check live availability and hold a room",
-      "url": "/book"
+      "name": "Open the studio",
+      "short_name": "Studio",
+      "description": "Make a beat in the browser — free, no account",
+      "url": "/studio"
     },
     {
       "name": "Our work",

@@ -304,7 +304,7 @@ export const beats: Beat[] = [
 export const products: Product[] = [
   {
     slug: 'studio-tee',
-    name: 'Pulse Studios Tee',
+    name: 'Gumba Tee',
     category: 'apparel',
     price: 32,
     description: 'Heavyweight cotton, screen-printed console diagram on the back. Runs true to size.',

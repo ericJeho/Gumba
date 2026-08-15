@@ -1,8 +1,8 @@
 <div align="center">
 
-# Pulse Studios
+# Gumba
 
-**A music production studio website — booking, portfolio, store, academy and a global player, in one Next.js app.**
+**A producer's studio — a free browser DAW at `/studio`, plus the studio site around it.**
 
 Next.js 15 · React · TypeScript · Tailwind CSS v4 · Framer Motion · Web Audio API
 
@@ -12,19 +12,24 @@ Next.js 15 · React · TypeScript · Tailwind CSS v4 · Framer Motion · Web Aud
 
 ## What this is
 
-A complete, production-shaped website for a recording studio. It is fully
-functional from a clean checkout — no database, no API keys and no audio files
-required to run it, browse every page, take the studio tour, play the catalogue
-or complete a booking end to end.
+Two things in one Next.js app:
 
-The design is dark-first with a separately designed light theme, glassmorphic
-chrome, a persistent audio player, canvas visualisers and a 360° room tour.
+1. **The studio** (`/studio`) — a working digital audio workstation that runs
+   entirely in the browser. Step sequencer, piano roll, per-channel mixer,
+   mastering chain, pattern generators, a microphone recorder and WAV export.
+   No account, no upload, no paid tier, no watermark.
+2. **The site** — the studio business around it: services, rooms, portfolio,
+   team, journal, booking and stores.
+
+It is fully functional from a clean checkout. No database, no API keys and **no
+audio files** are required to run it, make a beat, export it, browse every page
+or complete a booking end to end.
 
 ## Quick start
 
 ```bash
 npm install
-npm run dev          # http://localhost:3000
+npm run dev          # http://localhost:3000/studio
 ```
 
 That is the whole setup. Everything below is optional.
@@ -36,6 +41,71 @@ npm run typecheck    # tsc --noEmit
 npm run test         # vitest — booking maths and availability
 npm run lint
 ```
+
+---
+
+## The studio
+
+Everything you hear is **synthesised at runtime**. There are no samples in the
+repository, so there is no licensed audio to clear, nothing to download before
+the first note, and the studio keeps working offline.
+
+| Panel | What it does |
+| --- | --- |
+| **Transport** | Play/stop, BPM, swing, bar count, metronome, master meter, undo/redo, new/open/save, Export WAV |
+| **Channel rack** | FL-style 16-steps-per-bar grid. Click or drag to paint a run. Mute, solo, delete, add channel |
+| **Piano roll** | Click to place, drag a note's right edge to lengthen, click the keys to audition. Every note is a focusable element with its own label |
+| **Mixer** | Per channel: low/mid/high EQ, filter, compressor, reverb and delay sends, pan, fader, live meter. The master strip pins to the right edge and carries the mastering chain |
+| **Generate** | Chord progressions, melodies, basslines and genre drum patterns in the key you pick |
+| **Record** | Microphone takes via `MediaRecorder`, with an input meter and per-take download |
+
+Projects autosave to `localStorage` and can be saved to and opened from a file.
+Space plays and stops; `⌘Z` / `⇧⌘Z` undo and redo.
+
+### How the engine works
+
+`src/daw/engine.ts`. Signal path per track:
+
+```
+voice → filter → EQ → compressor → pan → volume → analyser → master
+                                 ↘ reverb send
+                                 ↘ delay send
+```
+
+and on the master bus:
+
+```
+sum → headroom trim → EQ → glue compressor → limiter → output gain → out
+```
+
+Three decisions worth knowing about:
+
+**Lookahead scheduling.** A `setInterval` wakes every 25 ms and schedules every
+note falling inside the next 120 ms against `AudioContext.currentTime`.
+Scheduling notes from timers directly inherits the main thread's jitter, which
+is audible as a wobbling hi-hat the moment the UI does any work.
+
+**One master chain, two contexts.** `buildMaster()` is called by live playback
+and by the offline render, so an exported WAV goes through exactly the same
+processing you mixed through. An export that sounds different from the monitor
+path is worse than no export at all.
+
+**Headroom before the limiter.** `DynamicsCompressorNode` has no look-ahead, so
+it clamps sustain but lets a fast transient straight through. Summing a dozen
+channels at unity reliably produces those transients, and the result is an
+export pinned at full scale. The sum bus is trimmed first and the output gain
+restores the level afterwards.
+
+### The generators are not a model
+
+`src/daw/generate.ts` is music theory in code: scales, diatonic chord stacking
+with optional sevenths, a constrained random walk that lands chord tones on
+strong beats, and per-genre drum templates. Seeded, so the same seed gives the
+same pattern.
+
+It runs offline and instantly, always lands in the key you picked, and nothing
+it produces is derived from anyone's recording — so what you make is yours. The
+panel says exactly this rather than implying a language model is involved.
 
 ---
 
@@ -101,19 +171,22 @@ sitemap, the search index and the booking wizard all pick it up.
 
 ---
 
-## How some of it works
+## How some of the rest works
 
-### The audio player
+### The site player
 
 One `PlayerProvider` in the root layout, so playback survives navigation. The
 graph is `source → gain → analyser → destination`, with the analyser after the
 gain so the visualisers react to what you actually hear.
 
-**No audio files are committed.** A track with a `src` is streamed; a track
-without one is *synthesised* in an `OfflineAudioContext` from the chord
+**No audio files are committed here either.** A track with a `src` is streamed; a
+track without one is *synthesised* in an `OfflineAudioContext` from the chord
 progression in its content entry (`src/components/player/synth.ts`). The player
 has one code path either way, so pointing a track at a real file is a one-line
 change.
+
+The player bar and the assistant bubble stand down on `/studio`: two transports
+both bound to the space bar is worse than one.
 
 ### Booking
 
@@ -155,8 +228,12 @@ per-message cost, and anything it cannot match hands over to a human.
 src/
   config/brand.ts        Single source of branding truth
   content/               All copy and data
+  daw/                   The studio: types, instruments, engine, export,
+                         generators, project store
   lib/                   Formatting, availability, quoting, SEO, hooks
   components/
+    daw/                 Transport, channel rack, piano roll, mixer,
+                         generators, recorder, shell
     ui/                  Button, Card, Section, Reveal, Accordion, Field…
     layout/              Nav, Footer, preferences, search, assistant
     player/              Provider, transport, synthesis, visualisers
@@ -167,8 +244,9 @@ src/
   app/                   Routes, API handlers, sitemap, robots, OG image
 ```
 
-96 routes, all statically prerendered except the four API handlers.
-**103 kB of shared JavaScript.**
+97 routes, all statically prerendered except the four API handlers.
+**103 kB of shared JavaScript**; `/studio` adds 1.4 kB on top and loads the
+engine on the client only.
 
 ## Performance, SEO and accessibility
 
@@ -185,9 +263,11 @@ Stated plainly rather than stubbed and left to look finished:
 
 - **Authentication.** The dashboard and admin views render fixture data. They define the shape of what the real queries need; both are `noindex` and disallowed in `robots.txt`.
 - **Payments.** The booking flow computes and presents a real deposit and stops at the point a Stripe intent would be created. The call site is marked.
-- **Persistence.** Bookings live in a process-local `Map`, newsletter signups in a `Set`. Both reset on restart, by design.
+- **Persistence.** Bookings live in a process-local `Map`, newsletter signups in a `Set`. Both reset on restart, by design. Studio projects persist in the browser, not on a server.
 - **Email and SMS.** Confirmations are computed, not sent.
-- **Generative AI features.** Beat/lyric/mastering generation was left out rather than faked; the recommendation quiz is a transparent weighted score, which is honest about what it is doing and cannot recommend a service the studio does not offer.
+- **A generative model.** The studio's generators are music theory, not a trained model, and the panel says so. Nothing calls out to an inference API, which is what keeps the studio free, offline and instant.
+- **Cloud collaboration.** Soundtrap's shared-session model needs a server and accounts; this stays local-first instead. Projects move as files.
+- **Audio-file import.** Only the microphone recorder produces audio in; there is no sample loader yet.
 - **Three.js and GSAP.** Framer Motion plus canvas covers the motion brief at a fraction of the bundle cost, which the performance target made the better trade.
 
 ## Licence
