@@ -229,12 +229,48 @@ const DRUM_TEMPLATES: Record<string, Record<string, number[]>> = {
     kick: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
     hat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    snap: [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
   },
   Trap: {
     kick: [1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0],
     snare: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
     hat: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     clap: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    openhat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+  },
+  /**
+   * The dembow. Kick on one and three, and the snare on the "and-a" — the
+   * displaced backbeat is the whole riddim, and squaring it up to 2 and 4
+   * turns dancehall into pop.
+   */
+  Dancehall: {
+    kick: [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    snare: [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+    hat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    shaker: [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],
+    rim: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+  },
+  'Reggaeton / dembow': {
+    kick: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
+    snare: [0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0],
+    hat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    shaker: [0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1],
+    conga: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1],
+  },
+  Drill: {
+    kick: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0],
+    snare: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    clap: [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    // The triplet-feel hat against a straight grid is drill's signature.
+    hat: [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0],
+    rim: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+  },
+  'Hip-hop / old school': {
+    kick: [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    snare: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    clap: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+    hat: [1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+    cowbell: [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
   },
   House: {
     kick: [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0],
@@ -300,4 +336,167 @@ export function generateDrums(
 /** The roles a given drum style defines, so the UI only offers real ones. */
 export function drumRoles(style: string): string[] {
   return Object.keys(DRUM_TEMPLATES[style] ?? {});
+}
+
+/* -------------------------------------------------------------------------- */
+/* The 808                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Rhythms for the 808 line, one bar each, as start-and-length pairs.
+ *
+ * Lengths matter more here than on any other instrument: an 808's decay is
+ * long, so overlapping notes on one channel muddy into each other. Every
+ * pattern below tiles a bar exactly, leaving each note the room to ring.
+ */
+const BASS_808_PATTERNS: Record<string, { step: number; length: number }[]> = {
+  'Long — one per bar': [{ step: 0, length: 16 }],
+  'Trap': [
+    { step: 0, length: 6 },
+    { step: 6, length: 3 },
+    { step: 9, length: 7 },
+  ],
+  'Drill slide': [
+    { step: 0, length: 8 },
+    { step: 8, length: 3 },
+    { step: 11, length: 5 },
+  ],
+  'Dancehall': [
+    { step: 0, length: 6 },
+    { step: 8, length: 6 },
+  ],
+  'Rolling eighths': [
+    { step: 0, length: 2 },
+    { step: 2, length: 2 },
+    { step: 4, length: 2 },
+    { step: 6, length: 2 },
+    { step: 8, length: 2 },
+    { step: 10, length: 2 },
+    { step: 12, length: 2 },
+    { step: 14, length: 2 },
+  ],
+};
+
+export const BASS_808_PATTERN_NAMES = Object.keys(BASS_808_PATTERNS);
+
+/** The register an 808 lives in — roughly C0 to B1. */
+const BASS_808_LOW = 24;
+const BASS_808_HIGH = 43;
+
+/** Folds a pitch into the 808's register by octaves, preserving the note. */
+function into808Register(pitch: number): number {
+  let folded = pitch;
+  while (folded > BASS_808_HIGH) folded -= 12;
+  while (folded < BASS_808_LOW) folded += 12;
+  return folded;
+}
+
+/**
+ * The lowest pitch sounding in each bar of a part.
+ *
+ * Used to make the 808 follow a chord progression that already exists in the
+ * project. Following the actual chords beats generating an independent
+ * progression and hoping the two agree — which they would not, since each
+ * generator rolls its own seed.
+ */
+export function rootsFromNotes(notes: Note[], bars: number): (number | null)[] {
+  const roots: (number | null)[] = [];
+
+  for (let bar = 0; bar < bars; bar += 1) {
+    const start = bar * STEPS_PER_BAR;
+    const end = start + STEPS_PER_BAR;
+    const sounding = notes.filter((note) => note.step >= start && note.step < end);
+
+    roots.push(sounding.length ? Math.min(...sounding.map((note) => note.pitch)) : null);
+  }
+
+  return roots;
+}
+
+/** Per-bar roots taken from a progression, for when there is no chord part yet. */
+export function progressionRoots({
+  root,
+  scale,
+  style,
+  bars,
+  seed,
+}: {
+  root: number;
+  scale: ScaleName;
+  style: string;
+  bars: number;
+  seed: number;
+}): number[] {
+  const random = rng(seed);
+  const scaleSteps = SCALES[scale];
+  const options = PROGRESSIONS[style] ?? PROGRESSIONS['Pop / anthemic']!;
+  const progression = options[Math.floor(random() * options.length)]!;
+
+  return Array.from({ length: bars }, (_, bar) =>
+    degreeToPitch(root, scaleSteps, progression[bar % progression.length]!),
+  );
+}
+
+export type Bass808Options = {
+  /** One root per bar. A null bar holds the previous root. */
+  roots: (number | null)[];
+  bars: number;
+  pattern: string;
+  seed: number;
+  /** Glides into each new root instead of re-striking it. */
+  glide: boolean;
+};
+
+/**
+ * Generates an 808 line.
+ *
+ * The line is deliberately monophonic and deliberately dull harmonically — it
+ * plays roots. An 808 that moves around inside the chord fights the chord,
+ * because at 40 Hz two notes a third apart are mud rather than harmony. What
+ * makes an 808 part interesting is rhythm and glide, which is where all the
+ * variation below goes.
+ */
+export function generate808({ roots, bars, pattern, seed, glide }: Bass808Options): Note[] {
+  const slots = BASS_808_PATTERNS[pattern] ?? BASS_808_PATTERNS['Trap']!;
+  const random = rng(seed);
+  const notes: Note[] = [];
+
+  let held = into808Register(roots.find((value): value is number => value !== null) ?? 33);
+  let previous: number | null = null;
+
+  for (let bar = 0; bar < bars; bar += 1) {
+    const root = roots[bar % roots.length];
+    if (root !== null && root !== undefined) held = into808Register(root);
+
+    for (const [index, slot] of slots.entries()) {
+      // The drill move: the last note of the bar leaps a fifth or an octave so
+      // the slide into the next bar's root has somewhere to travel from.
+      const leap =
+        pattern === 'Drill slide' && index === slots.length - 1
+          ? random() > 0.5
+            ? 7
+            : 12
+          : 0;
+
+      const pitch = into808Register(held + leap);
+
+      const note: Note = {
+        id: uid('n'),
+        step: bar * STEPS_PER_BAR + slot.step,
+        length: slot.length,
+        pitch,
+        velocity: index === 0 ? 0.95 : 0.78 + random() * 0.15,
+      };
+
+      // Glide only where the pitch actually changes. Every pattern above tiles
+      // its bar contiguously, so the previous note always runs up to this one —
+      // a slide across a gap would just be a note with a slow attack.
+      if (glide && previous !== null && previous !== pitch) note.slideFrom = previous;
+
+      notes.push(note);
+      previous = pitch;
+    }
+  }
+
+  return notes;
 }

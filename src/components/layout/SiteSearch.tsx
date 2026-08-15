@@ -11,7 +11,6 @@ import { rooms, equipment } from '@/content/studio';
 import { team } from '@/content/people';
 import { projects } from '@/content/work';
 import { posts } from '@/content/posts';
-import { courses, beats, events } from '@/content/commerce';
 
 /**
  * Site search.
@@ -92,36 +91,6 @@ function buildIndex(): Entry[] {
       group: 'Journal',
       description: post.excerpt,
       haystack: `${post.title} ${post.excerpt} ${post.tags.join(' ')}`.toLowerCase(),
-    });
-  }
-
-  for (const course of courses) {
-    entries.push({
-      title: course.title,
-      href: `/academy#${course.slug}`,
-      group: 'Academy',
-      description: course.summary,
-      haystack: `${course.title} ${course.summary} ${course.level}`.toLowerCase(),
-    });
-  }
-
-  for (const beat of beats) {
-    entries.push({
-      title: beat.title,
-      href: `/beats#${beat.slug}`,
-      group: 'Beats',
-      description: `${beat.bpm} BPM · ${beat.key}`,
-      haystack: `${beat.title} ${beat.producer} ${beat.genres.join(' ')} ${beat.key}`.toLowerCase(),
-    });
-  }
-
-  for (const studioEvent of events) {
-    entries.push({
-      title: studioEvent.title,
-      href: `/events#${studioEvent.slug}`,
-      group: 'Events',
-      description: studioEvent.summary,
-      haystack: `${studioEvent.title} ${studioEvent.summary} ${studioEvent.kind}`.toLowerCase(),
     });
   }
 

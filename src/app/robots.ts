@@ -7,9 +7,9 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        // The dashboard and admin views are noindex and behind auth in a real
-        // deployment; the API returns JSON that has no business in an index.
-        disallow: ['/api/', '/dashboard', '/admin'],
+        // Everything on this site is public and free, so the only thing worth
+        // keeping out of an index is the API, which returns JSON.
+        disallow: ['/api/'],
       },
     ],
     sitemap: absoluteUrl('/sitemap.xml'),

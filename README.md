@@ -2,7 +2,7 @@
 
 # Gumba
 
-**A producer's studio — a free browser DAW at `/studio`, plus the studio site around it.**
+**A producer's studio. Everything on it is free, and anyone can use any of it.**
 
 Next.js 15 · React · TypeScript · Tailwind CSS v4 · Framer Motion · Web Audio API
 
@@ -12,18 +12,17 @@ Next.js 15 · React · TypeScript · Tailwind CSS v4 · Framer Motion · Web Aud
 
 ## What this is
 
-Two things in one Next.js app:
+A working digital audio workstation that runs entirely in the browser, at
+`/studio`, with the studio's own site around it.
 
-1. **The studio** (`/studio`) — a working digital audio workstation that runs
-   entirely in the browser. Step sequencer, piano roll, per-channel mixer,
-   mastering chain, pattern generators, a microphone recorder and WAV export.
-   No account, no upload, no paid tier, no watermark.
-2. **The site** — the studio business around it: services, rooms, portfolio,
-   team, journal, booking and stores.
+**There is nothing to pay for and nothing to sign up to.** No account, no
+upload, no trial period, no watermark, no feature held behind a tier. There is
+no checkout, no cart and no payment code in the repository, because there is
+nothing to sell — every tool is open to anyone who loads the page.
 
 It is fully functional from a clean checkout. No database, no API keys and **no
-audio files** are required to run it, make a beat, export it, browse every page
-or complete a booking end to end.
+audio files** are required to run it, make a beat, export it or browse every
+page.
 
 ## Quick start
 
@@ -38,7 +37,7 @@ That is the whole setup. Everything below is optional.
 npm run build        # production build
 npm start            # serve the production build
 npm run typecheck    # tsc --noEmit
-npm run test         # vitest — booking maths and availability
+npm run test         # vitest — the generators, kits and sample packs
 npm run lint
 ```
 
@@ -56,7 +55,8 @@ the first note, and the studio keeps working offline.
 | **Channel rack** | FL-style 16-steps-per-bar grid. Click or drag to paint a run. Mute, solo, delete, add channel |
 | **Piano roll** | Click to place, drag a note's right edge to lengthen, click the keys to audition. Every note is a focusable element with its own label |
 | **Mixer** | Per channel: low/mid/high EQ, filter, compressor, reverb and delay sends, pan, fader, live meter. The master strip pins to the right edge and carries the mastering chain |
-| **Generate** | Chord progressions, melodies, basslines and genre drum patterns in the key you pick |
+| **Generate** | Chord progressions, melodies, basslines, genre drum patterns and 808 lines in the key you pick |
+| **Samples** | Synthesised one-shots by pack, plus one-click genre kits. Audition, add as a channel, or export the WAV |
 | **Record** | Microphone takes via `MediaRecorder`, with an input meter and per-take download |
 
 Projects autosave to `localStorage` and can be saved to and opened from a file.
@@ -96,6 +96,42 @@ channels at unity reliably produces those transients, and the result is an
 export pinned at full scale. The sum bus is trimmed first and the output gain
 restores the level afterwards.
 
+### 808s, hip-hop and dancehall
+
+The 808 is a real instrument here rather than a pitched-up kick: a driven sine
+with a pitch drop at the top and a genuine **glide** between notes, which is the
+gesture trap and drill are built on. Notes carry an optional `slideFrom`, so a
+slide is one continuous note bending into the next instead of being re-struck.
+
+`Generate → 808` follows the chords already in your project rather than rolling
+its own progression — an 808 line in a different key from the chords beside it
+is the obvious failure mode. It plays roots only, deliberately: two notes a
+third apart down at 40 Hz are mud, not harmony, so the variation lives in
+rhythm and glide instead.
+
+Drum templates cover **boom bap, trap, drill, old-school rap, dancehall,
+reggaeton/dembow**, house, afrobeats, drum & bass and pop. The dancehall and
+reggaeton snares sit on the displaced dembow accents rather than a straight
+backbeat, which is the difference between the riddim and pop — there is a test
+guarding exactly that.
+
+### The sample library
+
+`Samples` has one-shots grouped into **808s, a hip-hop kit, dancehall and
+trap & drill**, plus one-click genre kits that load drums, an 808 line, tempo
+and swing together.
+
+The one-shots are *generated*, not recorded. Each is an instrument plus a pitch
+rendered on demand, so the library downloads nothing, works offline, and carries
+no licence attached to anyone's recording — export a WAV and it is yours with
+nothing to clear and no split. The honest trade is that they carry no room, tape
+or hardware of their own; what they do carry is that every one is a function of
+its parameters, so you can retune and reshape them.
+
+Exported one-shots are peak-normalised. The voices are balanced against each
+other for playing together in a mix, which is right inside the studio and wrong
+for a library where every hit should arrive at a usable level.
+
 ### The generators are not a model
 
 `src/daw/generate.ts` is music theory in code: scales, diatonic chord stacking
@@ -112,8 +148,8 @@ panel says exactly this rather than implying a language model is involved.
 ## Rebranding
 
 Everything the site says about the studio — name, tagline, logo, colours,
-typography, address, phone, opening hours, social links, currency, deposit and
-cancellation policy — lives in **one file**:
+typography, address, phone, opening hours, social links and currency — lives in
+**one file**:
 
 ```
 src/config/brand.ts
@@ -159,15 +195,14 @@ The site is data-driven. Six files under `src/content/` supply every page:
 
 | File | Drives |
 | --- | --- |
-| `services.ts` | 30 services, detail pages, booking step one, the quiz |
+| `services.ts` | 30 services, detail pages, the recommendation quiz |
 | `studio.ts` | 9 rooms, equipment inventory, milestones, FAQs |
 | `people.ts` | Team profiles and testimonials |
 | `work.ts` | Portfolio projects and the player's catalogue |
-| `commerce.ts` | Packages, beats, merchandise, events, courses |
 | `posts.ts` | The journal |
 
 Adding a service means appending one object — the index, the detail page, the
-sitemap, the search index and the booking wizard all pick it up.
+sitemap and the search index all pick it up.
 
 ---
 
@@ -187,17 +222,6 @@ change.
 
 The player bar and the assistant bubble stand down on `/studio`: two transports
 both bound to the space bar is worse than one.
-
-### Booking
-
-`src/lib/quote.ts` computes every price. The wizard and the API both call it, so
-the figure a visitor agrees to and the figure the server charges cannot drift.
-The API re-validates the slot and recomputes the total from trusted inputs — a
-client-supplied price is treated as a request, not a fact.
-
-Availability (`src/lib/availability.ts`) is generated deterministically from a
-hash of the room and date, so the server-rendered calendar and the hydrated one
-agree. Swapping in a real bookings table means replacing one function.
 
 ### The room tour
 
@@ -229,24 +253,22 @@ src/
   config/brand.ts        Single source of branding truth
   content/               All copy and data
   daw/                   The studio: types, instruments, engine, export,
-                         generators, project store
-  lib/                   Formatting, availability, quoting, SEO, hooks
+                         generators, one-shot library and kits, project store
+  lib/                   Formatting, SEO, hooks
   components/
     daw/                 Transport, channel rack, piano roll, mixer,
-                         generators, recorder, shell
+                         generators, sample library, recorder, shell
     ui/                  Button, Card, Section, Reveal, Accordion, Field…
     layout/              Nav, Footer, preferences, search, assistant
     player/              Provider, transport, synthesis, visualisers
-    booking/             Wizard and calendar
     home/                Hero, sections, timeline, A/B tool, quiz
     rooms/               360° panorama tour
-    shop/                Cart shared by the beat and merch stores
   app/                   Routes, API handlers, sitemap, robots, OG image
 ```
 
-97 routes, all statically prerendered except the four API handlers.
-**103 kB of shared JavaScript**; `/studio` adds 1.4 kB on top and loads the
-engine on the client only.
+87 routes, all statically prerendered except the two API handlers.
+**103 kB of shared JavaScript**; `/studio` adds a little over 1 kB on top and
+loads the engine on the client only.
 
 ## Performance, SEO and accessibility
 
@@ -261,13 +283,13 @@ engine on the client only.
 
 Stated plainly rather than stubbed and left to look finished:
 
-- **Authentication.** The dashboard and admin views render fixture data. They define the shape of what the real queries need; both are `noindex` and disallowed in `robots.txt`.
-- **Payments.** The booking flow computes and presents a real deposit and stops at the point a Stripe intent would be created. The call site is marked.
-- **Persistence.** Bookings live in a process-local `Map`, newsletter signups in a `Set`. Both reset on restart, by design. Studio projects persist in the browser, not on a server.
-- **Email and SMS.** Confirmations are computed, not sent.
+- **Payments, accounts and a cart.** Not stubbed — removed. Nothing here is sold, so there is no checkout, no pricing page, no deposit calculator and no Stripe call site left waiting to be filled in.
+- **Persistence.** Newsletter signups live in a process-local `Set` and reset on restart, by design. Studio projects persist in your browser, not on a server — which also means clearing browser data deletes them, so save a file for anything you want to keep.
+- **Email and SMS.** Contact messages are validated, not sent.
 - **A generative model.** The studio's generators are music theory, not a trained model, and the panel says so. Nothing calls out to an inference API, which is what keeps the studio free, offline and instant.
 - **Cloud collaboration.** Soundtrap's shared-session model needs a server and accounts; this stays local-first instead. Projects move as files.
-- **Audio-file import.** Only the microphone recorder produces audio in; there is no sample loader yet.
+- **Audio-file import.** Only the microphone recorder brings audio in. The sample library is synthesised, so there is no loader for a .wav you already own.
+- **Recorded samples.** Every one-shot is generated. That is what makes the library free of licensing, and it is also why nothing in it carries the character of a real room or a real 808 through a real desk.
 - **Three.js and GSAP.** Framer Motion plus canvas covers the motion brief at a fraction of the bundle cost, which the performance target made the better trade.
 
 ## Licence

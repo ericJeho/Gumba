@@ -51,8 +51,7 @@ export function ServicesPreview() {
 
                 <div className="mt-6 flex items-center justify-between border-t border-line pt-4">
                   <span className="text-sm">
-                    <span className="font-medium">{formatMoney(service.price, currency)}</span>
-                    <span className="text-ink-subtle"> / {service.priceUnit}</span>
+                    <span className="font-medium text-brand">Free</span>
                   </span>
                   <ArrowUpRight className="size-4 text-ink-subtle transition-all group-hover:translate-x-0.5 group-hover:text-brand" />
                 </div>
@@ -334,11 +333,11 @@ export function ClosingCta({ className }: { className?: string }) {
         </p>
 
         <div className="mt-10 flex flex-wrap justify-center gap-3">
-          <Button href="/book" size="lg">
+          <Button href="/studio" size="lg">
             <Clock className="size-4" />
             Check availability
           </Button>
-          <Button href="/pricing" variant="outline" size="lg">
+          <Button href="/services" variant="outline" size="lg">
             See pricing
           </Button>
         </div>

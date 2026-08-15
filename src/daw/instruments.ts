@@ -25,6 +25,8 @@ export type VoiceContext = {
   velocity: number;
   /** Note length in seconds. Percussion ignores it. */
   duration: number;
+  /** MIDI pitch to glide from. Only the 808 and the sub act on it. */
+  slideFrom?: number;
 };
 
 function midiToFreq(pitch: number): number {
@@ -103,6 +105,39 @@ function adsr(
   gain.gain.setValueAtTime(0, end + shape.release);
 
   return gain;
+}
+
+/**
+ * A soft-clipping curve for the 808's drive, cached per amount.
+ *
+ * A pure sine at 40 Hz is nearly inaudible on a laptop or a phone: the speaker
+ * cannot move enough air to reproduce the fundamental. Saturating it adds
+ * harmonics an octave and a fifth up, and the ear reconstructs the missing
+ * fundamental from them. That is why every record 808 is driven, and why an
+ * undistorted one sounds like it has disappeared on small speakers.
+ */
+// Typed against ArrayBuffer rather than the default ArrayBufferLike: WaveShaper's
+// curve does not accept a view that might be backed by a SharedArrayBuffer.
+const driveCache = new Map<number, Float32Array<ArrayBuffer>>();
+
+function driveCurve(amount: number): Float32Array<ArrayBuffer> {
+  const cached = driveCache.get(amount);
+  if (cached) return cached;
+
+  const samples = 1024;
+  const curve = new Float32Array(samples);
+  const ceiling = Math.tanh(amount);
+
+  for (let i = 0; i < samples; i += 1) {
+    const x = (i * 2) / (samples - 1) - 1;
+    // Normalised by tanh(amount) so the curve still spans ±1 — otherwise
+    // raising the drive quietly raises the level too and every comparison is
+    // really a loudness comparison.
+    curve[i] = Math.tanh(amount * x) / ceiling;
+  }
+
+  driveCache.set(amount, curve);
+  return curve;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -220,9 +255,283 @@ function rim({ ctx, destination, time, velocity }: VoiceContext) {
   osc.stop(time + 0.08);
 }
 
+function snap({ ctx, destination, time, velocity }: VoiceContext) {
+  // A clap is a room of hands; a snap is one pair, so it is a single burst with
+  // a tighter, higher band and almost no tail.
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2600;
+  filter.Q.value = 1.6;
+  filter.connect(destination);
+
+  const gain = decayEnvelope(ctx, time, velocity * 0.7, 0.055);
+  gain.connect(filter);
+  noiseSource(ctx, time, 0.08).connect(gain);
+
+  // A short tuned ping gives the snap its "crack" rather than a hiss.
+  const ping = decayEnvelope(ctx, time, velocity * 0.25, 0.02);
+  ping.connect(filter);
+  const osc = ctx.createOscillator();
+  osc.type = 'triangle';
+  osc.frequency.value = 1750;
+  osc.connect(ping);
+  osc.start(time);
+  osc.stop(time + 0.05);
+}
+
+function shaker({ ctx, destination, time, velocity }: VoiceContext) {
+  // Slower attack than a hi-hat — beads take a moment to hit the shell, and
+  // that ramp is the whole difference between a shaker and a closed hat.
+  const gain = decayEnvelope(ctx, time, velocity * 0.3, 0.07, 0.012);
+  gain.connect(destination);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 6800;
+  filter.Q.value = 0.9;
+
+  noiseSource(ctx, time, 0.12).connect(filter).connect(gain);
+}
+
+function cowbell({ ctx, destination, time, velocity }: VoiceContext) {
+  const gain = decayEnvelope(ctx, time, velocity * 0.32, 0.32, 0.002);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = 2640;
+  filter.Q.value = 1.4;
+  filter.connect(gain).connect(destination);
+
+  // Two detuned squares at a non-harmonic ratio. The 808's cowbell is exactly
+  // this trick, and the clash between the two is what makes it metallic.
+  for (const frequency of [540, 800]) {
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = frequency;
+    osc.connect(filter);
+    osc.start(time);
+    osc.stop(time + 0.4);
+  }
+}
+
+function conga({ ctx, destination, time, pitch, velocity }: VoiceContext) {
+  const base = midiToFreq(pitch);
+  const gain = decayEnvelope(ctx, time, velocity * 0.8, 0.22, 0.002);
+  gain.connect(destination);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(base * 1.25, time);
+  osc.frequency.exponentialRampToValueAtTime(base, time + 0.07);
+  osc.connect(gain);
+  osc.start(time);
+  osc.stop(time + 0.3);
+
+  // The slap: a hand on a skin is a pitched membrane plus a broadband hit.
+  const slap = decayEnvelope(ctx, time, velocity * 0.3, 0.03);
+  slap.connect(destination);
+  const band = ctx.createBiquadFilter();
+  band.type = 'bandpass';
+  band.frequency.value = 2400;
+  band.Q.value = 1.2;
+  noiseSource(ctx, time, 0.05).connect(band).connect(slap);
+}
+
+function crash({ ctx, destination, time, velocity, duration }: VoiceContext) {
+  const decay = Math.min(2.6, Math.max(1.1, duration));
+  const gain = decayEnvelope(ctx, time, velocity * 0.3, decay, 0.004);
+  gain.connect(destination);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = 4200;
+
+  // A cymbal is noise with resonances, not flat noise; the peak keeps it from
+  // sounding like tape hiss with an envelope on it.
+  const peak = ctx.createBiquadFilter();
+  peak.type = 'peaking';
+  peak.frequency.value = 8200;
+  peak.Q.value = 0.7;
+  peak.gain.value = 7;
+
+  noiseSource(ctx, time, decay + 0.1).connect(filter).connect(peak).connect(gain);
+}
+
+function vinyl({ ctx, destination, time, velocity, duration }: VoiceContext) {
+  // A texture rather than a hit: hold a long note on this channel and it runs
+  // underneath the beat the way a record's noise floor does.
+  const length = Math.min(8, Math.max(0.4, duration));
+
+  const bed = ctx.createGain();
+  bed.gain.setValueAtTime(velocity * 0.05, time);
+  bed.gain.setValueAtTime(velocity * 0.05, time + length);
+  bed.gain.linearRampToValueAtTime(0, time + length + 0.05);
+  bed.connect(destination);
+
+  const tone = ctx.createBiquadFilter();
+  tone.type = 'bandpass';
+  tone.frequency.value = 2200;
+  tone.Q.value = 0.4;
+  tone.connect(bed);
+  noiseSource(ctx, time, length + 0.06).connect(tone);
+
+  // Crackle: sparse clicks scattered across the note. Randomised per hit, so a
+  // looped bar never repeats the same pops and give itself away.
+  const pops = Math.floor(length * 26);
+  for (let i = 0; i < pops; i += 1) {
+    const at = time + Math.random() * length;
+    const pop = decayEnvelope(ctx, at, velocity * (0.05 + Math.random() * 0.25), 0.006);
+    pop.connect(destination);
+
+    const band = ctx.createBiquadFilter();
+    band.type = 'bandpass';
+    band.frequency.value = 1400 + Math.random() * 3600;
+    band.Q.value = 2.4;
+    noiseSource(ctx, at, 0.02).connect(band).connect(pop);
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Melodic                                                                     */
 /* -------------------------------------------------------------------------- */
+
+/**
+ * The 808.
+ *
+ * Not a kick — a tuned, long-decaying sine that carries the bassline, which is
+ * what the instrument became once producers started pitching the TR-808's bass
+ * drum up and playing melodies on it. Three things make it read as an 808
+ * rather than as a sine:
+ *
+ *  - the pitch drop at the very top, which is the "knock" that lets it cut
+ *    through a mix before the sustain arrives;
+ *  - the drive, which manufactures the harmonics small speakers need (see
+ *    `driveCurve`);
+ *  - the glide, when the note carries a `slideFrom`.
+ *
+ * The glide replaces the knock rather than joining it. A slide is one
+ * continuous note bending to a new pitch, so re-attacking it would defeat the
+ * whole gesture.
+ */
+function eight08({ ctx, destination, time, pitch, velocity, duration, slideFrom }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  const sliding = slideFrom !== undefined && slideFrom !== pitch;
+
+  // An 808 rings well past the note you wrote; that tail is the instrument.
+  const total = Math.min(3.4, Math.max(duration, 0.3) + 0.55);
+
+  const gain = decayEnvelope(ctx, time, velocity * 0.9, total, sliding ? 0.02 : 0.004);
+  gain.connect(destination);
+
+  const shaper = ctx.createWaveShaper();
+  shaper.curve = driveCurve(2.4);
+  // Distorting before the envelope keeps the harmonic content constant as the
+  // note decays. After it, the tone would thin out as it faded, which sounds
+  // like a fault rather than a choice.
+  shaper.oversample = '2x';
+  shaper.connect(gain);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+
+  if (sliding) {
+    osc.frequency.setValueAtTime(midiToFreq(slideFrom), time);
+    // Fixed in time rather than in semitones: a slide takes about as long
+    // whether it travels a tone or an octave, which is how it is played.
+    osc.frequency.exponentialRampToValueAtTime(freq, time + Math.min(0.16, total * 0.35));
+  } else {
+    osc.frequency.setValueAtTime(freq * 3, time);
+    osc.frequency.exponentialRampToValueAtTime(freq, time + 0.04);
+  }
+
+  osc.connect(shaper);
+  osc.start(time);
+  osc.stop(time + total + 0.1);
+}
+
+function skank({ ctx, destination, time, pitch, velocity }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  // Dancehall and reggae's offbeat chop. Short is the point — it is a rhythm
+  // part played on a pitched instrument, so anything with sustain stops
+  // working the moment you stack it into a chord.
+  const gain = decayEnvelope(ctx, time, velocity * 0.28, 0.11, 0.006);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.frequency.value = Math.min(5200, freq * 4);
+  filter.Q.value = 1.1;
+  filter.connect(gain).connect(destination);
+
+  for (const detune of [-8, 8]) {
+    const osc = ctx.createOscillator();
+    osc.type = 'square';
+    osc.frequency.value = freq;
+    osc.detune.value = detune;
+    osc.connect(filter);
+    osc.start(time);
+    osc.stop(time + 0.2);
+  }
+}
+
+function horn({ ctx, destination, time, pitch, velocity, duration }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  const gain = adsr(ctx, time, duration, velocity * 0.22, {
+    attack: 0.035,
+    decay: 0.18,
+    sustain: 0.75,
+    release: 0.16,
+  });
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'lowpass';
+  filter.Q.value = 2.5;
+  // Brass gets its bite from the filter opening as the player leans in, not
+  // from the waveform — a static saw reads as a synth lead instead.
+  filter.frequency.setValueAtTime(Math.max(300, freq * 1.4), time);
+  filter.frequency.exponentialRampToValueAtTime(Math.min(7000, freq * 8), time + 0.12);
+  filter.connect(gain).connect(destination);
+
+  for (const detune of [-7, 0, 7]) {
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    osc.detune.value = detune;
+    osc.connect(filter);
+    osc.start(time);
+    osc.stop(time + duration + 0.4);
+  }
+}
+
+function siren({ ctx, destination, time, pitch, velocity, duration }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  const length = Math.min(6, Math.max(0.3, duration));
+
+  const gain = adsr(ctx, time, length, velocity * 0.16, {
+    attack: 0.02,
+    decay: 0.05,
+    sustain: 0.95,
+    release: 0.12,
+  });
+  gain.connect(destination);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  osc.start(time);
+  osc.stop(time + length + 0.2);
+
+  // The sweep is the instrument. A dub siren is an oscillator whose pitch is
+  // being swung by a second, much slower one.
+  const lfo = ctx.createOscillator();
+  lfo.type = 'triangle';
+  lfo.frequency.value = 4.5;
+  const depth = ctx.createGain();
+  depth.gain.value = 700;
+  lfo.connect(depth).connect(osc.frequency);
+  lfo.start(time);
+  lfo.stop(time + length + 0.2);
+}
 
 function bass({ ctx, destination, time, pitch, velocity, duration }: VoiceContext) {
   const freq = midiToFreq(pitch);
@@ -423,6 +732,13 @@ const VOICES: Record<InstrumentId, (voice: VoiceContext) => void> = {
   openhat: (voice) => hat(voice, true),
   tom,
   rim,
+  snap,
+  shaker,
+  cowbell,
+  conga,
+  crash,
+  vinyl,
+  '808': eight08,
   bass,
   sub,
   pluck,
@@ -430,6 +746,9 @@ const VOICES: Record<InstrumentId, (voice: VoiceContext) => void> = {
   pad,
   lead,
   bell,
+  skank,
+  horn,
+  siren,
 };
 
 /** Schedules one note. Safe to call ahead of time — everything is time-stamped. */

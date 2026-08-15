@@ -4,7 +4,6 @@ import { Check } from 'lucide-react';
 import { Badge, Button, Card, Reveal, Section } from '@/components/ui';
 import { Price } from '@/components/ui/Price';
 import { PanoramaTour, type Hotspot } from '@/components/rooms/PanoramaTour';
-import { RoomAvailability } from '@/app/rooms/[slug]/RoomAvailability';
 import { breadcrumbSchema, jsonLd, pageMetadata } from '@/lib/seo';
 import { equipmentInRoom, getRoom, rooms } from '@/content/studio';
 import { services } from '@/content/services';
@@ -81,7 +80,7 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <Button href={`/book?room=${room.slug}`} size="lg">
+            <Button href="/studio" size="lg">
               Book this room
             </Button>
             <Button href="/contact" variant="outline" size="lg">
@@ -176,18 +175,11 @@ export default async function RoomPage({ params }: { params: Promise<{ slug: str
                 ))}
               </dl>
 
-              <Button href={`/book?room=${room.slug}`} className="mt-6 w-full">
-                Check availability
+              <Button href="/studio" className="mt-6 w-full">
+                Open the studio
               </Button>
             </Card>
 
-            <Card className="p-7">
-              <h2 className="font-display text-lg font-medium">Next two weeks</h2>
-              <p className="mt-1 text-xs text-ink-subtle">
-                Live from the booking calendar. Click a day to start a booking.
-              </p>
-              <RoomAvailability roomSlug={room.slug} />
-            </Card>
           </aside>
         </div>
       </Section>

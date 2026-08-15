@@ -162,7 +162,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ slug: 
             </div>
 
             <div className="mt-10 flex flex-wrap gap-3">
-              <Button href="/book">Start a project like this</Button>
+              <Button href="/studio">Make something like this</Button>
               <Button href="/work" variant="outline">
                 More work
               </Button>

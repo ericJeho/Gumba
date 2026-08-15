@@ -100,7 +100,7 @@ export default async function TeamMemberPage({ params }: { params: Promise<{ slu
                 {member.availability}
               </p>
 
-              <Button href={`/book?engineer=${member.slug}`} className="mt-5 w-full">
+              <Button href="/contact" className="mt-5 w-full">
                 Book {member.name.split(' ')[0]}
               </Button>
 

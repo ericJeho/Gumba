@@ -22,28 +22,29 @@ type Doc = {
 const DOCS: Record<string, Doc> = {
   terms: {
     title: 'Terms of service',
-    description: 'The terms under which the studio takes bookings and delivers work.',
+    description: 'The terms under which the studio is provided. Short, because it is free.',
     updated: '2026-07-01',
     sections: [
       {
-        heading: 'Bookings and deposits',
+        heading: 'What it costs',
         body: [
-          `A booking is confirmed when the deposit of ${brand.booking.depositPercent}% is received. The balance is due on the session date, before the session begins. Members with an active subscription are billed after the session instead.`,
-          `Sessions have a minimum length of ${brand.booking.minimumHours} hours. Sessions starting after 18:00 carry a 20% surcharge on the room rate, which is itemised in your quote before payment.`,
+          'Nothing. Every tool on this site — the studio, its instruments, the sample library, the generators, the mixer, the mastering chain and the WAV export — is free to anyone, with no account, no trial period and no feature held back behind a paid tier.',
+          'There is no upsell coming later either. The studio needs no servers to run your session: it works in your browser, so there is no per-user cost that would eventually have to be recovered from you.',
         ],
       },
       {
-        heading: 'Cancellation and rescheduling',
+        heading: 'No account, no upload',
         body: [
-          `Cancel or reschedule more than ${brand.booking.cancellationHours} hours before the session and your deposit is transferred to the new date or refunded in full.`,
-          `Inside ${brand.booking.cancellationHours} hours the deposit is retained, because the room cannot realistically be re-let at that notice. If we cancel for any reason, you receive a full refund and priority on the next available slot.`,
+          'You are not asked to register, and nothing you make is sent to us. Projects save to your own browser and export as files you keep. Clearing your browser data deletes your work, because we do not hold a copy — save a .json or a .wav for anything you want to keep.',
+          'That also means we cannot recover a lost project for you. It is the honest cost of not holding your work on our servers.',
         ],
       },
       {
         heading: 'Ownership of your work',
         body: [
-          'You own the masters, stems and session files of everything recorded for you here. We keep an archival copy for twelve months as a safety net; you can ask us to delete it at any time.',
-          'Producers, writers and session players who make a creative contribution take a documented share of the composition, agreed in writing before work begins. We do not take publishing, administration rights or a royalty share in your recordings.',
+          'Everything you make in the studio is yours outright. We claim no ownership, no licence, no publishing, no administration rights and no royalty share in it, and using the free tools creates no obligation to credit us.',
+          'Every sound the studio produces is synthesised from oscillators and shaped noise rather than sampled from a recording, so nothing you export contains anyone else\u2019s copyrighted audio. There is nothing to clear and no split to pay.',
+          'For work recorded with our engineers in the room, producers, writers and session players who make a creative contribution take a documented share of the composition, agreed in writing before work begins.',
         ],
       },
       {

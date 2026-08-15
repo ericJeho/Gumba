@@ -5,14 +5,18 @@ import { Dices, Sparkles, Wand2 } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useProject } from '@/daw/store';
 import {
+  BASS_808_PATTERN_NAMES,
   DRUM_STYLES,
   PROGRESSION_STYLES,
   SCALE_LABELS,
   SCALES,
   drumRoles,
+  generate808,
   generateChords,
   generateDrums,
   generateMelody,
+  progressionRoots,
+  rootsFromNotes,
   type ScaleName,
 } from '@/daw/generate';
 import { createTrack, pitchName, type InstrumentId } from '@/daw/types';
@@ -37,6 +41,8 @@ export function AiTools() {
   const [drumStyle, setDrumStyle] = useState(DRUM_STYLES[1]!);
   const [density, setDensity] = useState(0.6);
   const [sevenths, setSevenths] = useState(true);
+  const [bass808, setBass808] = useState(BASS_808_PATTERN_NAMES[1]!);
+  const [glide, setGlide] = useState(true);
   const [note, setNote] = useState<string | null>(null);
 
   /**
@@ -257,6 +263,74 @@ export function AiTools() {
           >
             <Wand2 className="size-4" />
             Generate drums
+          </button>
+        </div>
+
+        {/* The 808 */}
+        <div className="rounded-xl border border-line p-3">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium">808 line</h3>
+            <label className="flex items-center gap-1.5 text-xs text-ink-subtle">
+              <input
+                type="checkbox"
+                checked={glide}
+                onChange={(event) => setGlide(event.target.checked)}
+                className="accent-[hsl(var(--brand))]"
+              />
+              Glide
+            </label>
+          </div>
+
+          <select
+            value={bass808}
+            onChange={(event) => setBass808(event.target.value)}
+            className="mt-2.5 w-full rounded-lg border border-line bg-surface px-3 py-2 text-sm"
+          >
+            {BASS_808_PATTERN_NAMES.map((pattern) => (
+              <option key={pattern} value={pattern}>
+                {pattern}
+              </option>
+            ))}
+          </select>
+
+          <p className="mt-2 text-xs leading-relaxed text-ink-subtle">
+            Follows the chords already in your project. Plays roots only — two notes a third
+            apart down at 40 Hz is mud, not harmony.
+          </p>
+
+          <button
+            type="button"
+            onClick={() => {
+              const seed = Math.floor(Math.random() * 1e9);
+
+              // Follow the harmony that is actually in the project. Rolling an
+              // independent progression here would give an 808 line in a
+              // different key from the chords sitting next to it.
+              const harmony = project.tracks
+                .filter((track) => track.kind === 'synth' && track.instrument !== '808')
+                .flatMap((track) => track.notes);
+
+              const followed = harmony.length ? rootsFromNotes(harmony, project.bars) : null;
+              const following = followed?.some((value) => value !== null) ?? false;
+
+              const roots = following
+                ? followed!
+                : progressionRoots({ root, scale, style: chordStyle, bars: project.bars, seed });
+
+              writeTo('808', '808', () =>
+                generate808({ roots, bars: project.bars, pattern: bass808, seed, glide }),
+              );
+
+              setNote(
+                following
+                  ? `808 written under your chords — ${bass808.toLowerCase()}${glide ? ', gliding' : ''}.`
+                  : `808 written in ${pitchName(root)} ${SCALE_LABELS[scale].toLowerCase()} — no chords to follow yet.`,
+              );
+            }}
+            className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg bg-brand py-2 text-sm font-medium text-canvas transition-all hover:brightness-110"
+          >
+            <Wand2 className="size-4" />
+            Generate 808
           </button>
         </div>
 

@@ -1,6 +1,6 @@
 import { buildMaster } from '@/daw/engine';
 import { playVoice } from '@/daw/instruments';
-import { STEPS_PER_BAR, type Project } from '@/daw/types';
+import { STEPS_PER_BAR, type InstrumentId, type Project } from '@/daw/types';
 
 /**
  * Offline render and WAV export.
@@ -165,11 +165,77 @@ export async function renderProject(project: Project, tailSeconds = 2.5): Promis
         pitch: note.pitch,
         velocity: note.velocity,
         duration: Math.max(0.05, note.length * spb),
+        slideFrom: note.slideFrom,
       });
     }
   }
 
   return ctx.startRendering();
+}
+
+/**
+ * Renders one instrument's voice on its own, dry.
+ *
+ * This is what makes the one-shot library a real sample library rather than a
+ * preview: the WAV it produces can be dropped into any other DAW. Nothing from
+ * the mixer or the master chain is applied, because a one-shot should arrive
+ * unprocessed and be shaped where it lands.
+ */
+export async function renderOneShot(
+  instrument: InstrumentId,
+  pitch: number,
+  seconds = 2,
+): Promise<AudioBuffer> {
+  const sampleRate = 44100;
+  const ctx = new OfflineAudioContext(2, Math.ceil(seconds * sampleRate), sampleRate);
+
+  playVoice(instrument, {
+    ctx,
+    // A few milliseconds of lead-in rather than starting at sample zero: some
+    // editors read a transient flush against the file start as a click.
+    destination: ctx.destination,
+    time: 0.005,
+    pitch,
+    velocity: 0.95,
+    duration: Math.max(0.2, seconds - 0.6),
+  });
+
+  const buffer = await ctx.startRendering();
+  return normalise(buffer);
+}
+
+/**
+ * Scales a buffer so its loudest sample sits just under full scale.
+ *
+ * The voices are balanced against each other for playing together in a mix, so
+ * their raw levels differ by a lot — a dub siren renders around a tenth of the
+ * level of a kick. That is correct inside the studio and wrong for a sample
+ * library, where every one-shot should arrive at a usable, consistent level and
+ * be turned down where it lands.
+ */
+function normalise(buffer: AudioBuffer, ceiling = 0.89): AudioBuffer {
+  let peak = 0;
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < data.length; i += 1) {
+      const value = Math.abs(data[i]!);
+      if (value > peak) peak = value;
+    }
+  }
+
+  // Silence, or already at the ceiling: nothing to do, and dividing by a peak
+  // of zero would fill the buffer with NaN.
+  if (peak === 0) return buffer;
+
+  const gain = ceiling / peak;
+
+  for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+    const data = buffer.getChannelData(channel);
+    for (let i = 0; i < data.length; i += 1) data[i]! *= gain;
+  }
+
+  return buffer;
 }
 
 /** Triggers a browser download for a blob. */

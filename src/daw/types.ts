@@ -21,13 +21,23 @@ export type InstrumentId =
   | 'openhat'
   | 'tom'
   | 'rim'
+  | 'snap'
+  | 'shaker'
+  | 'cowbell'
+  | 'conga'
+  | 'crash'
+  | 'vinyl'
+  | '808'
   | 'bass'
   | 'sub'
   | 'pluck'
   | 'keys'
   | 'pad'
   | 'lead'
-  | 'bell';
+  | 'bell'
+  | 'skank'
+  | 'horn'
+  | 'siren';
 
 export type TrackKind = 'drum' | 'synth' | 'audio';
 
@@ -41,6 +51,15 @@ export type Note = {
   pitch: number;
   /** 0–1. */
   velocity: number;
+  /**
+   * MIDI pitch to glide up or down from when the note starts.
+   *
+   * This is the 808 slide — the defining gesture of trap and drill, where one
+   * continuous bass note bends into the next instead of being re-struck. It
+   * lives on the note rather than on the track because it is a property of this
+   * transition, and it is optional so older saved projects still parse.
+   */
+  slideFrom?: number;
 };
 
 export type TrackEffects = {
@@ -142,6 +161,13 @@ export const INSTRUMENTS: {
   { id: 'openhat', name: 'Open hat', kind: 'drum', hue: 72, defaultPitch: 46 },
   { id: 'tom', name: 'Tom', kind: 'drum', hue: 20, defaultPitch: 45 },
   { id: 'rim', name: 'Rim', kind: 'drum', hue: 88, defaultPitch: 37 },
+  { id: 'snap', name: 'Snap', kind: 'drum', hue: 40, defaultPitch: 39 },
+  { id: 'shaker', name: 'Shaker', kind: 'drum', hue: 64, defaultPitch: 70 },
+  { id: 'cowbell', name: 'Cowbell', kind: 'drum', hue: 50, defaultPitch: 56 },
+  { id: 'conga', name: 'Conga', kind: 'drum', hue: 26, defaultPitch: 48 },
+  { id: 'crash', name: 'Crash', kind: 'drum', hue: 76, defaultPitch: 49 },
+  { id: 'vinyl', name: 'Vinyl', kind: 'drum', hue: 96, defaultPitch: 60 },
+  { id: '808', name: '808', kind: 'synth', hue: 8, defaultPitch: 31 },
   { id: 'bass', name: 'Bass', kind: 'synth', hue: 150, defaultPitch: 36 },
   { id: 'sub', name: 'Sub', kind: 'synth', hue: 168, defaultPitch: 31 },
   { id: 'pluck', name: 'Pluck', kind: 'synth', hue: 196, defaultPitch: 60 },
@@ -149,6 +175,9 @@ export const INSTRUMENTS: {
   { id: 'pad', name: 'Pad', kind: 'synth', hue: 262, defaultPitch: 55 },
   { id: 'lead', name: 'Lead', kind: 'synth', hue: 290, defaultPitch: 67 },
   { id: 'bell', name: 'Bell', kind: 'synth', hue: 320, defaultPitch: 72 },
+  { id: 'skank', name: 'Skank', kind: 'synth', hue: 130, defaultPitch: 64 },
+  { id: 'horn', name: 'Horn stab', kind: 'synth', hue: 38, defaultPitch: 62 },
+  { id: 'siren', name: 'Siren', kind: 'synth', hue: 350, defaultPitch: 72 },
 ];
 
 export function instrumentInfo(id: InstrumentId) {

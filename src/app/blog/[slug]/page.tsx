@@ -166,8 +166,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               The people who wrote this take sessions. Live availability, published rates.
             </p>
             <div className="mt-6 flex flex-wrap justify-center gap-3">
-              <Button href="/book">Book a session</Button>
-              <Button href="/academy" variant="outline">
+              <Button href="/studio">Open the studio</Button>
+              <Button href="/blog" variant="outline">
                 Or learn it yourself
               </Button>
             </div>

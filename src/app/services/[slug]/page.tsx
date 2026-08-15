@@ -66,8 +66,6 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
             name: service.name,
             description: service.summary,
             path: `/services/${service.slug}`,
-            price: service.price,
-            priceUnit: service.priceUnit,
           }),
         )}
       />
@@ -125,10 +123,10 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               and the button should never be more than a glance away. */}
           <aside className="lg:sticky lg:top-24 lg:self-start">
             <Card className="p-7">
-              <p className="text-xs uppercase tracking-widest text-ink-subtle">From</p>
+              <p className="text-xs uppercase tracking-widest text-ink-subtle">What it costs</p>
               <p className="mt-1 font-display text-4xl font-semibold">
-                <Price usd={service.price} />
-                <span className="text-base font-normal text-ink-subtle"> / {service.priceUnit}</span>
+                Free
+                <span className="text-base font-normal text-ink-subtle"> · no account</span>
               </p>
 
               <dl className="mt-6 space-y-3 border-t border-line pt-5 text-sm">
@@ -158,7 +156,7 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
               </dl>
 
               <div className="mt-6 grid gap-2.5">
-                <Button href={`/book?service=${service.slug}`} size="lg">
+                <Button href="/studio" size="lg">
                   Book now
                 </Button>
                 <Button href="/contact" variant="outline">

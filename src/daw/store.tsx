@@ -24,7 +24,14 @@ import {
   type Track,
   type TrackEffects,
 } from '@/daw/types';
-import { generateDrums } from '@/daw/generate';
+import {
+  drumRoles,
+  generate808,
+  generateDrums,
+  progressionRoots,
+  rootsFromNotes,
+} from '@/daw/generate';
+import type { Kit } from '@/daw/samples';
 
 /**
  * Project state and the engine binding.
@@ -131,6 +138,12 @@ type StoreValue = {
 
   setMaster: (patch: Partial<MasterChain>) => void;
   preview: (trackId: string, pitch: number) => void;
+  /** Auditions an instrument that has no channel yet — the sample library. */
+  previewInstrument: (instrument: InstrumentId, pitch: number) => void;
+  /** Adds a channel at a set pitch, optionally with notes already in it. */
+  addChannel: (instrument: InstrumentId, options?: { name?: string; notes?: Note[] }) => void;
+  /** Replaces the project with a genre starting point. */
+  loadKit: (kit: Kit) => void;
 
   undo: () => void;
   redo: () => void;
@@ -292,6 +305,23 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
     [ensureEngine, project.tracks],
   );
 
+  /**
+   * Auditions an instrument with no channel of its own.
+   *
+   * The sample library needs to make a sound before you commit to a channel,
+   * so this plays the voice straight into the master bus, bypassing the mixer
+   * entirely — there is no strip to route it through yet.
+   */
+  const previewInstrument = useCallback(
+    (instrument: InstrumentId, pitch: number) => {
+      void (async () => {
+        const engine = await ensureEngine();
+        engine.previewInstrument(instrument, pitch);
+      })();
+    },
+    [ensureEngine],
+  );
+
   /* ---------------------------------------------------------------------- */
   /* Editing                                                                 */
   /* ---------------------------------------------------------------------- */
@@ -301,6 +331,67 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       const track = createTrack(instrument);
       setProject((current) => ({ ...current, tracks: [...current.tracks, track] }));
       setSelectedTrackId(track.id);
+    },
+    [setProject],
+  );
+
+  const addChannel = useCallback(
+    (instrument: InstrumentId, options?: { name?: string; notes?: Note[] }) => {
+      const track = createTrack(instrument, options?.name);
+      if (options?.notes) track.notes = options.notes;
+
+      setProject((current) => ({ ...current, tracks: [...current.tracks, track] }));
+      setSelectedTrackId(track.id);
+    },
+    [setProject],
+  );
+
+  /**
+   * Loads a genre kit over the current project.
+   *
+   * Tempo and swing come with it, because they are as much a part of a genre as
+   * the pattern is — a dembow at 140 straight is not dancehall. The project
+   * name is left alone: overwriting what somebody called their track while
+   * they are auditioning kits is the kind of small theft that makes a tool feel
+   * careless.
+   */
+  const loadKit = useCallback(
+    (kit: Kit) => {
+      setProject((current) => {
+        const bars = current.bars;
+        const seed = Math.floor(Math.random() * 1e9);
+
+        const drums = drumRoles(kit.drumStyle).map((role, index) => {
+          const track = createTrack(role as InstrumentId);
+          track.notes = generateDrums(kit.drumStyle, role, bars, seed + index);
+          return track;
+        });
+
+        const tracks: Track[] = [...drums];
+
+        if (kit.bass808) {
+          // Follow whatever harmony is already in the project; only invent a
+          // progression when there is nothing to follow.
+          const chords = current.tracks.filter((track) => track.kind === 'synth');
+          const existing = chords.flatMap((track) => track.notes);
+          const followed = existing.length ? rootsFromNotes(existing, bars) : null;
+
+          const roots =
+            followed && followed.some((value) => value !== null)
+              ? followed
+              : progressionRoots({ root: 33, scale: 'minor', style: 'Trap / dark', bars, seed });
+
+          const track = createTrack('808');
+          track.notes = generate808({ roots, bars, pattern: kit.bass808, seed, glide: true });
+          tracks.push(track);
+        }
+
+        for (const instrument of kit.extras) tracks.push(createTrack(instrument));
+
+        return { ...current, bpm: kit.bpm, swing: kit.swing, tracks };
+      });
+
+      setSelectedTrackId('');
     },
     [setProject],
   );
@@ -512,6 +603,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       toggleStep,
       setMaster,
       preview,
+      previewInstrument,
+      addChannel,
+      loadKit,
       undo,
       redo,
       newProject,
@@ -541,6 +635,9 @@ export function ProjectProvider({ children }: { children: ReactNode }) {
       toggleStep,
       setMaster,
       preview,
+      previewInstrument,
+      addChannel,
+      loadKit,
       undo,
       redo,
       newProject,

@@ -2,6 +2,7 @@ import { playVoice } from '@/daw/instruments';
 import {
   DEFAULT_MASTER,
   STEPS_PER_BAR,
+  type InstrumentId,
   type MasterChain,
   type Project,
   type Track,
@@ -360,6 +361,24 @@ export class AudioEngine {
     });
   }
 
+  /**
+   * Plays one note of an instrument that has no channel.
+   *
+   * Routed straight to the master input, skipping the mixer: the sample
+   * library auditions sounds before you decide to keep them, and there is no
+   * strip to send them through yet.
+   */
+  previewInstrument(instrument: InstrumentId, pitch: number, duration = 0.6) {
+    playVoice(instrument, {
+      ctx: this.ctx,
+      destination: this.masterNodes.input,
+      time: this.ctx.currentTime + 0.01,
+      pitch,
+      velocity: 0.9,
+      duration,
+    });
+  }
+
   private secondsPerStep(bpm: number) {
     // A step is a 16th note: one beat is four steps.
     return 60 / bpm / 4;
@@ -440,6 +459,7 @@ export class AudioEngine {
             pitch: note.pitch,
             velocity: note.velocity,
             duration: Math.max(0.05, note.length * spb),
+            slideFrom: note.slideFrom,
           });
         }
       }

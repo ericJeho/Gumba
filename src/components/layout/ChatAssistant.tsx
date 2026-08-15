@@ -34,114 +34,121 @@ type Rule = {
 
 const RULES: Rule[] = [
   {
-    patterns: [/\b(price|cost|rate|how much|expensive|budget)\b/i],
+    patterns: [/\b(price|cost|rate|how much|expensive|budget|pay|payment|subscription|trial|premium|pro)\b/i],
     answer:
-      'Rooms run from $70 to $340 an hour depending on the space, and services are priced per song or per project. The booking wizard gives you an itemised quote before you pay anything.',
-    href: '/pricing',
-    hrefLabel: 'See pricing',
+      'Nothing costs anything. The studio, every instrument, the sample library, the generators, the mixer, mastering and the WAV export are all free, with no account and no trial that runs out.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
   },
   {
-    patterns: [/\b(book|booking|available|availability|free|slot|when can)\b/i],
+    patterns: [/\b(sign ?up|account|log ?in|register|email address)\b/i],
     answer:
-      'Live availability for every room is on the booking page — pick a service, a room and a time and you will see exactly what is open.',
-    href: '/book',
-    hrefLabel: 'Check availability',
+      'There is no account. The studio opens straight into a project, and your work saves to your own browser rather than to a server of ours.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
   },
   {
-    patterns: [/\b(deposit|pay|payment|card|invoice)\b/i],
-    answer: `A ${brand.booking.depositPercent}% deposit holds the room and the balance is due on the session date. Members pay no deposit and are billed afterwards.`,
-    href: '/pricing',
-    hrefLabel: 'Membership',
-  },
-  {
-    patterns: [/\b(cancel|reschedule|refund|move)\b/i],
-    answer: `Cancel or reschedule more than ${brand.booking.cancellationHours} hours ahead and the deposit moves with you or is refunded in full. Inside that window it is retained, because the room cannot be re-let at that notice.`,
-  },
-  {
-    patterns: [/\b(mix|mixing)\b/i],
+    patterns: [/\b(808|sub ?bass|glide|slide)\b/i],
     answer:
-      'Mixing is $750 a song with two revision rounds included, delivered in about five days along with an instrumental, an a cappella and a TV mix.',
-    href: '/services/mixing',
-    hrefLabel: 'About mixing',
+      'There is a tuned 808 with drive and a real glide between notes. Generate an 808 line from the Generate panel and it follows whatever chords are already in your project.',
+    href: '/studio',
+    hrefLabel: 'Try it',
   },
   {
-    patterns: [/\b(master|mastering)\b/i],
+    patterns: [/\b(sample|one ?shot|pack|kit|drum ?kit|preset)\b/i],
     answer:
-      'Mastering is $180 a track on a two-day turnaround, and every master ships with a null-test report so you can hear exactly what changed.',
-    href: '/services/mastering',
-    hrefLabel: 'About mastering',
+      'The Samples panel has 808s, a hip-hop kit, dancehall percussion and a trap and drill kit — plus one-click genre kits. Every one-shot is synthesised rather than recorded, so you can export it as a WAV and use it anywhere with nothing to clear.',
+    href: '/studio',
+    hrefLabel: 'Browse the library',
   },
   {
-    patterns: [/\b(atmos|immersive|spatial|dolby)\b/i],
+    patterns: [/\b(dancehall|dembow|reggaeton|riddim|skank)\b/i],
     answer:
-      'We have a Dolby-certified 9.1.6 suite, recalibrated quarterly. Atmos mixing is $950 a song — and we will tell you honestly if your record does not need one.',
-    href: '/services/dolby-atmos-mixing',
-    hrefLabel: 'Atmos mixing',
+      'Dancehall and reggaeton are both in the kit list, with the dembow snare, shaker, congas, the offbeat skank and a dub siren. The kit sets the tempo and feel with it.',
+    href: '/studio',
+    hrefLabel: 'Load the kit',
   },
   {
-    patterns: [/\b(podcast|episode|interview)\b/i],
+    patterns: [/\b(rap|hip ?hop|trap|drill|boom ?bap|beat)\b/i],
     answer:
-      'The podcast room seats four with isolated audio per mic and four cameras included. It is $220 an hour, and full editing with clips and show notes is $320 an episode.',
-    href: '/services/podcast-recording',
-    hrefLabel: 'Podcast recording',
+      'Trap, drill, boom bap and old-school rap are all one click from the Samples panel — drums, 808 and tempo together. Then write over them in the piano roll.',
+    href: '/studio',
+    hrefLabel: 'Make a beat',
   },
   {
-    patterns: [/\b(where|address|location|parking|directions|find you)\b/i],
-    answer: `We are at ${brand.contact.address.street}, ${brand.contact.address.city}. There is a street-level loading bay straight into the live room and four reserved parking spaces.`,
+    patterns: [/\b(export|wav|download|stem|own|rights|licen[cs]e|copyright|royalt)\b/i],
+    answer:
+      'Export WAV gives you a 16-bit stereo file with no watermark. Nothing in the studio is derived from anyone\u2019s recording — every sound is generated — so what you make is yours outright, with no clearance and no split.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
+  },
+  {
+    patterns: [/\b(record|microphone|mic|vocal|take)\b/i],
+    answer:
+      'The Record panel captures from your microphone straight in the browser, with an input meter and a download per take. Nothing is uploaded anywhere.',
+    href: '/studio',
+    hrefLabel: 'Record something',
+  },
+  {
+    patterns: [/\b(mix|mixing|eq|compress|reverb|delay|pan)\b/i],
+    answer:
+      'Every channel has low, mid and high EQ, a filter, a compressor, reverb and delay sends, pan and a fader with a live meter. The master strip adds glue compression, a limiter and a ceiling.',
+    href: '/studio',
+    hrefLabel: 'Open the mixer',
+  },
+  {
+    patterns: [/\b(master|mastering|loud|ceiling|limiter)\b/i],
+    answer:
+      'Mastering happens on the master strip, and the export renders through exactly the same chain you monitored through — so the file sounds like what you mixed. There are Warm, Loud and Flat starting points.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
+  },
+  {
+    patterns: [/\b(ai|generate|generator|model|chatgpt|prompt)\b/i],
+    answer:
+      'The generators are music theory in code — scales, chord functions and genre rhythm templates — not a language model. That is why they are instant, work offline, and always land in the key you picked.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
+  },
+  {
+    patterns: [/\b(offline|internet|install|download the app|phone|mobile)\b/i],
+    answer:
+      'It runs in the browser with nothing to install, and it keeps working offline once loaded — no sounds are fetched, because they are all generated on the spot.',
+    href: '/studio',
+    hrefLabel: 'Open the studio',
+  },
+  {
+    patterns: [/\b(where|address|location|parking|directions|find you|visit)\b/i],
+    answer: `The room is at ${brand.contact.address.street}, ${brand.contact.address.city}. The studio in your browser is the part you can use right now, from anywhere.`,
     href: '/contact',
     hrefLabel: 'Directions',
   },
   {
-    patterns: [/\b(hours|open|close|late|weekend|night)\b/i],
+    patterns: [/\b(access|wheelchair|disabled|accessible|screen ?reader|keyboard)\b/i],
     answer:
-      'Weekdays 09:00 to 23:00, Fridays and Saturdays until 02:00, Sundays 12:00 to 20:00. Overnight blocks are available on request.',
-  },
-  {
-    patterns: [/\b(access|wheelchair|disabled|accessible|step|hearing)\b/i],
-    answer:
-      'The building is step-free throughout, with an accessible bathroom and a hearing loop in both control rooms. Tell us what you need when you book and it will be ready.',
+      'The studio is keyboard operable throughout, every note and step is a labelled control rather than a canvas drawing, and everything that animates honours a reduced-motion preference.',
     href: '/legal/accessibility',
     hrefLabel: 'Accessibility',
   },
   {
-    patterns: [/\b(own|rights|master|publishing|splits|contract)\b/i],
-    answer:
-      'You own your masters, stems and session files. Producers and writers take a documented share of the composition, agreed in writing before the work starts.',
-  },
-  {
-    patterns: [/\b(engineer|who|team|producer|staff)\b/i],
-    answer:
-      'You book a person, not just a room. Every engineer has their own credits, rate and calendar.',
+    patterns: [/\b(engineer|who|team|producer|staff|built)\b/i],
+    answer: 'The people behind it, with their credits.',
     href: '/team',
     hrefLabel: 'Meet the team',
   },
   {
     patterns: [/\b(gear|equipment|console|mic|microphone|ssl|neve)\b/i],
     answer:
-      'An SSL Origin, eight channels of Neve 1073, ATC mains and a room full of Neumanns — the full inventory is public, with specs.',
+      'An SSL Origin, eight channels of Neve 1073, ATC mains and a room full of Neumanns — the hardware the studio\u2019s instruments were modelled on. The full inventory is public.',
     href: '/equipment',
     hrefLabel: 'Equipment list',
-  },
-  {
-    patterns: [/\b(course|learn|academy|teach|class|lesson)\b/i],
-    answer:
-      'The Academy runs courses in recording, mixing, mastering, beat making and podcast production, taught by the same engineers who work the sessions.',
-    href: '/academy',
-    hrefLabel: 'Browse courses',
-  },
-  {
-    patterns: [/\b(beat|instrumental|licen[cs]e|type beat)\b/i],
-    answer:
-      'The beat store has instrumentals from $45, with lease and exclusive options. Preview any of them in the player.',
-    href: '/beats',
-    hrefLabel: 'Beat store',
   },
 ];
 
 const GREETING: Message = {
   id: 0,
   from: 'bot',
-  text: `Hello — I can answer questions about rates, availability, gear and how we work. Anything I cannot answer goes straight to a person.`,
+  text: `Hello — I can answer questions about the studio, what is in it and how it works. Everything here is free, so there is no price for me to get wrong. Anything I cannot answer goes to a person.`,
 };
 
 export function ChatAssistant() {
@@ -226,7 +233,7 @@ export function ChatAssistant() {
             <div className="border-b border-line px-5 py-3.5">
               <p className="text-sm font-medium">Studio assistant</p>
               <p className="text-xs text-ink-subtle">
-                Answers from our own FAQ. Never invents a price.
+                Answers from our own FAQ. Hands over when it does not know.
               </p>
             </div>
 
@@ -261,7 +268,7 @@ export function ChatAssistant() {
 
             {messages.length === 1 ? (
               <div className="flex flex-wrap gap-2 border-t border-line px-4 py-3">
-                {['What does mixing cost?', 'Are you free next week?', 'Do I own my masters?'].map(
+                {['Is it really free?', 'How do I make a trap beat?', 'Do I own what I export?'].map(
                   (suggestion) => (
                     <button
                       key={suggestion}

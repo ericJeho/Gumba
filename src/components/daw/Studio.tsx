@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Grid3x3, Mic, Music4, Sliders, Sparkles } from 'lucide-react';
+import { Grid3x3, LibraryBig, Mic, Music4, Sliders, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/cn';
 import { useMediaQuery } from '@/lib/hooks';
 import { ProjectProvider, useProject } from '@/daw/store';
@@ -10,6 +10,7 @@ import { ChannelRack } from '@/components/daw/ChannelRack';
 import { PianoRoll } from '@/components/daw/PianoRoll';
 import { Mixer } from '@/components/daw/Mixer';
 import { AiTools } from '@/components/daw/AiTools';
+import { SampleLibrary } from '@/components/daw/SampleLibrary';
 import { Recorder } from '@/components/daw/Recorder';
 
 /**
@@ -30,11 +31,12 @@ export function Studio() {
   );
 }
 
-type Panel = 'mixer' | 'generate' | 'record';
+type Panel = 'mixer' | 'generate' | 'samples' | 'record';
 
 const PANELS: { id: Panel; label: string; icon: typeof Sliders }[] = [
   { id: 'mixer', label: 'Mixer', icon: Sliders },
   { id: 'generate', label: 'Generate', icon: Sparkles },
+  { id: 'samples', label: 'Samples', icon: LibraryBig },
   { id: 'record', label: 'Record', icon: Mic },
 ];
 
@@ -104,6 +106,7 @@ function StudioShell() {
             </div>
 
             {active === 'generate' ? <AiTools /> : null}
+            {active === 'samples' ? <SampleLibrary /> : null}
             {active === 'record' ? <Recorder /> : null}
             {active === 'mixer' ? <Mixer /> : null}
 

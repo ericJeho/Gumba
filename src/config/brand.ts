@@ -167,19 +167,16 @@ export const brand = {
     },
   } satisfies Record<'dark' | 'light', ThemePalette>,
 
-  /** Default currency; the switcher in the footer overrides it per visitor. */
+  /**
+   * Default currency. Nothing on the site is sold, so this only affects the
+   * few places a figure is formatted for reference; the footer switcher still
+   * works for visitors who want their own.
+   */
   currency: 'USD',
 
   /** Used for canonical URLs, sitemaps, Open Graph and structured data. */
   url: override(process.env.NEXT_PUBLIC_SITE_URL, 'http://localhost:3000'),
 
-  /** Shown on the booking summary and used by the deposit calculator. */
-  booking: {
-    depositPercent: 30,
-    cancellationHours: 48,
-    minimumHours: 2,
-    taxPercent: 8.875,
-  },
 } as const;
 
 export type Brand = typeof brand;

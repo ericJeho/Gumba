@@ -31,25 +31,23 @@ type NavItem = {
 const NAV: NavItem[] = [
   { label: 'Studio', href: '/studio' },
   {
-    label: 'Services',
+    label: 'What it does',
     href: '/services',
     children: [
-      { label: 'Recording', href: '/services/recording', description: 'Tracking with an engineer who stays in the room' },
-      { label: 'Mixing', href: '/services/mixing', description: 'Balance, depth and translation' },
-      { label: 'Mastering', href: '/services/mastering', description: 'The last set of ears, and every format' },
-      { label: 'Music production', href: '/services/music-production', description: 'A producer from first idea to final print' },
-      { label: 'Dolby Atmos', href: '/services/dolby-atmos-mixing', description: 'A certified 9.1.6 room' },
-      { label: 'All services', href: '/services', description: 'Thirty ways we can help your record' },
+      { label: 'Making beats', href: '/services/music-production', description: 'Channel rack, piano roll, generators' },
+      { label: 'Recording', href: '/services/recording', description: 'Straight from your microphone, in the tab' },
+      { label: 'Mixing', href: '/services/mixing', description: 'EQ, compression, filter and sends per channel' },
+      { label: 'Mastering', href: '/services/mastering', description: 'Glue, limiter and ceiling on the master strip' },
+      { label: 'Everything', href: '/services', description: 'The full list of what the studio covers' },
     ],
   },
   {
     label: 'The building',
     href: '/rooms',
     children: [
-      { label: 'Rooms', href: '/rooms', description: 'Nine spaces, virtual tours and live availability' },
-      { label: 'Equipment', href: '/equipment', description: 'Every microphone, console and instrument' },
-      { label: 'The team', href: '/team', description: 'Who you will actually be working with' },
-      { label: 'Events', href: '/events', description: 'Workshops, masterclasses and open days' },
+      { label: 'Rooms', href: '/rooms', description: 'Nine spaces, with virtual tours' },
+      { label: 'Equipment', href: '/equipment', description: 'The gear the instruments were modelled on' },
+      { label: 'The team', href: '/team', description: 'Who builds this' },
     ],
   },
   {
@@ -57,12 +55,9 @@ const NAV: NavItem[] = [
     href: '/work',
     children: [
       { label: 'Portfolio', href: '/work', description: 'Records, films, podcasts and campaigns' },
-      { label: 'Beat store', href: '/beats', description: 'Licence an instrumental in two clicks' },
-      { label: 'Academy', href: '/academy', description: 'Courses taught by the studio team' },
       { label: 'Journal', href: '/blog', description: 'How we work, written down' },
     ],
   },
-  { label: 'Pricing', href: '/pricing' },
   { label: 'Contact', href: '/contact' },
 ];
 

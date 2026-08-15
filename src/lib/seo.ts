@@ -81,7 +81,7 @@ export function localBusinessSchema() {
     telephone: brand.contact.phoneRaw,
     email: brand.contact.email,
     foundingDate: String(brand.founded),
-    priceRange: '$$$',
+    priceRange: 'Free',
     image: absoluteUrl('/opengraph-image'),
     address: {
       '@type': 'PostalAddress',
@@ -106,13 +106,7 @@ export function localBusinessSchema() {
   };
 }
 
-export function serviceSchema(input: {
-  name: string;
-  description: string;
-  path: string;
-  price: number;
-  priceUnit: string;
-}) {
+export function serviceSchema(input: { name: string; description: string; path: string }) {
   return {
     '@context': 'https://schema.org',
     '@type': 'Service',
@@ -123,12 +117,12 @@ export function serviceSchema(input: {
     areaServed: brand.contact.address.countryName,
     offers: {
       '@type': 'Offer',
-      price: input.price,
+      // Zero with a currency is how schema.org expresses free, and it is what
+      // makes a rich result say so rather than leaving the price blank.
+      price: 0,
       priceCurrency: 'USD',
-      // Without this, a rich result can show a stale price indefinitely.
-      priceValidUntil: `${new Date().getFullYear() + 1}-12-31`,
       availability: 'https://schema.org/InStock',
-      description: `Per ${input.priceUnit}`,
+      description: 'Free — no account required',
     },
   };
 }

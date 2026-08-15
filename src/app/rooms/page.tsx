@@ -5,7 +5,6 @@ import { Price } from '@/components/ui/Price';
 import { pageMetadata } from '@/lib/seo';
 import { ClosingCta } from '@/components/home/Sections';
 import { rooms } from '@/content/studio';
-import { nextAvailableDate } from '@/lib/availability';
 import { formatDateShort } from '@/lib/format';
 
 export const metadata = pageMetadata({
@@ -24,13 +23,11 @@ export default function RoomsPage() {
           as="h1"
           eyebrow="The studio"
           title="Nine rooms, each built for one job."
-          lead="Walk through any of them before you book. Every room has a 360° tour, its full equipment list, and a calendar showing exactly what is free."
+          lead="Walk through any of them. Every room has a 360° tour and its full equipment list — the same gear the studio's instruments were modelled on."
         />
 
         <div className="mt-14 space-y-6">
           {rooms.map((room, index) => {
-            const earliest = nextAvailableDate(room.slug);
-
             return (
               <Reveal key={room.slug} delay={Math.min(index, 4) * 0.06}>
                 <article className="group grid overflow-hidden rounded-panel border border-line bg-surface/50 transition-colors hover:border-brand/40 lg:grid-cols-[1.1fr_1.4fr]">
@@ -88,14 +85,6 @@ export default function RoomsPage() {
                           {room.capacity}
                         </dd>
                       </div>
-                      <div>
-                        <dt className="text-xs uppercase tracking-widest text-ink-subtle">
-                          Next free
-                        </dt>
-                        <dd className="mt-1 font-medium text-success">
-                          {earliest ? formatDateShort(earliest) : 'Enquire'}
-                        </dd>
-                      </div>
                     </dl>
 
                     <div className="mt-6 flex flex-wrap gap-3">
@@ -105,12 +94,6 @@ export default function RoomsPage() {
                       >
                         Take the tour
                         <ArrowUpRight className="size-4" aria-hidden />
-                      </Link>
-                      <Link
-                        href={`/book?room=${room.slug}`}
-                        className="inline-flex items-center gap-1.5 text-sm text-ink-muted hover:text-ink"
-                      >
-                        Check availability
                       </Link>
                     </div>
                   </div>

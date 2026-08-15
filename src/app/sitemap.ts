@@ -13,27 +13,22 @@ import { posts } from '@/content/posts';
  * or a post puts it in the sitemap automatically — the commonest SEO regression
  * is a hand-maintained sitemap that quietly falls behind the site.
  *
- * `/dashboard` and `/admin` are deliberately absent: both are noindex and
- * neither has anything a crawler should reach.
+ * The studio itself sits near the top: it is the thing people come for, and it
+ * is a real page rather than an app shell behind a login.
  */
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
   const staticPages: MetadataRoute.Sitemap = [
     { url: absoluteUrl('/'), lastModified: now, changeFrequency: 'weekly', priority: 1 },
+    { url: absoluteUrl('/studio'), lastModified: now, changeFrequency: 'weekly', priority: 1 },
     { url: absoluteUrl('/services'), lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: absoluteUrl('/rooms'), lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
-    { url: absoluteUrl('/book'), lastModified: now, changeFrequency: 'daily', priority: 0.9 },
-    { url: absoluteUrl('/pricing'), lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
+    { url: absoluteUrl('/rooms'), lastModified: now, changeFrequency: 'monthly', priority: 0.8 },
     { url: absoluteUrl('/work'), lastModified: now, changeFrequency: 'weekly', priority: 0.8 },
     { url: absoluteUrl('/team'), lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: absoluteUrl('/equipment'), lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: absoluteUrl('/contact'), lastModified: now, changeFrequency: 'yearly', priority: 0.7 },
     { url: absoluteUrl('/blog'), lastModified: now, changeFrequency: 'weekly', priority: 0.7 },
-    { url: absoluteUrl('/academy'), lastModified: now, changeFrequency: 'monthly', priority: 0.6 },
-    { url: absoluteUrl('/beats'), lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
-    { url: absoluteUrl('/store'), lastModified: now, changeFrequency: 'monthly', priority: 0.5 },
-    { url: absoluteUrl('/events'), lastModified: now, changeFrequency: 'weekly', priority: 0.6 },
   ];
 
   const legal: MetadataRoute.Sitemap = [

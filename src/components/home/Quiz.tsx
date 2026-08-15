@@ -251,12 +251,7 @@ export function ServiceQuiz() {
                             {entry.service.summary}
                           </span>
                         </span>
-                        <span className="shrink-0 text-sm">
-                          {formatMoney(entry.service.price, currency)}
-                          <span className="block text-right text-xs text-ink-subtle">
-                            / {entry.service.priceUnit}
-                          </span>
-                        </span>
+                        <span className="shrink-0 text-sm font-medium text-brand">Free</span>
                       </Link>
                     </li>
                   ))}
@@ -270,7 +265,7 @@ export function ServiceQuiz() {
                 </p>
 
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Button href="/book">Check availability</Button>
+                  <Button href="/studio">Open the studio</Button>
                   <Button href="/contact" variant="outline">
                     Talk to a human
                   </Button>

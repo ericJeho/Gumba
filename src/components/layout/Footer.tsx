@@ -11,35 +11,30 @@ import { inputClass } from '@/components/ui';
 
 const FOOTER_LINKS: { heading: string; links: { label: string; href: string }[] }[] = [
   {
-    heading: 'Studio',
+    heading: 'Make',
     links: [
-      { label: 'Services', href: '/services' },
-      { label: 'Rooms', href: '/rooms' },
+      { label: 'Open the studio', href: '/studio' },
+      { label: 'What it does', href: '/services' },
+      { label: 'The rooms', href: '/rooms' },
       { label: 'Equipment', href: '/equipment' },
-      { label: 'The team', href: '/team' },
-      { label: 'Pricing', href: '/pricing' },
-      { label: 'Book a session', href: '/book' },
     ],
   },
   {
     heading: 'Explore',
     links: [
       { label: 'Our work', href: '/work' },
-      { label: 'Beat store', href: '/beats' },
-      { label: 'Merch', href: '/store' },
-      { label: 'Academy', href: '/academy' },
-      { label: 'Events', href: '/events' },
+      { label: 'The team', href: '/team' },
       { label: 'Journal', href: '/blog' },
+      { label: 'Contact', href: '/contact' },
     ],
   },
   {
-    heading: 'Clients',
+    heading: 'The small print',
     links: [
-      { label: 'Client dashboard', href: '/dashboard' },
-      { label: 'Contact', href: '/contact' },
       { label: 'Careers', href: '/legal/careers' },
       { label: 'Press kit', href: '/legal/press' },
       { label: 'Accessibility', href: '/legal/accessibility' },
+      { label: 'Privacy', href: '/legal/privacy' },
     ],
   },
 ];
