@@ -55,12 +55,31 @@ function noiseBuffer(ctx: BaseAudioContext): AudioBuffer {
   return buffer;
 }
 
-/** A noise source starting at a random offset, so repeats do not phase-lock. */
+/**
+ * A noise source starting at a random offset, so repeats do not phase-lock.
+ *
+ * The cached buffer is two seconds, and the long-form voices — risers, reverse
+ * cymbals, crashes, vinyl beds — ask for more than that. Asking for a random
+ * offset inside a buffer shorter than the note produces a *negative* offset,
+ * which throws a RangeError and takes the whole render down with it. Anything
+ * that long loops the buffer instead: a seam every two seconds under a sweeping
+ * filter is inaudible, and a buffer per note length would not be.
+ */
 function noiseSource(ctx: BaseAudioContext, time: number, duration: number): AudioBufferSourceNode {
   const source = ctx.createBufferSource();
-  source.buffer = noiseBuffer(ctx);
-  const buffer = source.buffer!;
-  source.start(time, Math.random() * (buffer.duration - duration - 0.01), duration);
+  const buffer = noiseBuffer(ctx);
+  source.buffer = buffer;
+
+  const headroom = buffer.duration - duration - 0.01;
+
+  if (headroom <= 0) {
+    source.loop = true;
+    source.start(time);
+    source.stop(time + duration);
+    return source;
+  }
+
+  source.start(time, Math.random() * headroom, duration);
   return source;
 }
 
@@ -722,6 +741,175 @@ function bell({ ctx, destination, time, pitch, velocity, duration }: VoiceContex
   }
 }
 
+function flute({ ctx, destination, time, pitch, velocity, duration }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  const gain = adsr(ctx, time, duration, velocity * 0.2, {
+    attack: 0.06,
+    decay: 0.12,
+    sustain: 0.85,
+    release: 0.22,
+  });
+  gain.connect(destination);
+
+  // A flute is very nearly a sine; what identifies it is the breath. The tone
+  // alone reads as a test oscillator, so the noise below is not a garnish.
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.value = freq;
+  osc.connect(gain);
+  osc.start(time);
+  osc.stop(time + duration + 0.4);
+
+  const overtone = ctx.createOscillator();
+  overtone.type = 'sine';
+  overtone.frequency.value = freq * 2;
+  const overtoneGain = ctx.createGain();
+  overtoneGain.gain.value = 0.14;
+  overtone.connect(overtoneGain).connect(gain);
+  overtone.start(time);
+  overtone.stop(time + duration + 0.4);
+
+  const breath = ctx.createGain();
+  breath.gain.setValueAtTime(0.0001, time);
+  breath.gain.exponentialRampToValueAtTime(velocity * 0.05, time + 0.05);
+  breath.gain.exponentialRampToValueAtTime(velocity * 0.012, time + 0.3);
+  breath.connect(gain);
+
+  const breathBand = ctx.createBiquadFilter();
+  breathBand.type = 'bandpass';
+  breathBand.frequency.value = freq * 2.2;
+  breathBand.Q.value = 1.1;
+  noiseSource(ctx, time, Math.min(1.9, duration + 0.3)).connect(breathBand).connect(breath);
+
+  // Players do not hold a note dead straight, and a flat one sounds synthetic.
+  const vibrato = ctx.createOscillator();
+  vibrato.frequency.value = 5;
+  const depth = ctx.createGain();
+  depth.gain.setValueAtTime(0, time);
+  depth.gain.linearRampToValueAtTime(9, time + 0.35);
+  vibrato.connect(depth).connect(osc.detune);
+  vibrato.start(time);
+  vibrato.stop(time + duration + 0.4);
+}
+
+function chop({ ctx, destination, time, pitch, velocity, duration }: VoiceContext) {
+  const freq = midiToFreq(pitch);
+  const length = Math.min(0.9, Math.max(0.12, duration));
+
+  const gain = adsr(ctx, time, length, velocity * 0.17, {
+    attack: 0.012,
+    decay: 0.08,
+    sustain: 0.7,
+    release: 0.09,
+  });
+  gain.connect(destination);
+
+  // Two fixed formant bands over a saw is the cheapest thing that reads as a
+  // voice rather than a synth: it is roughly an "ah", and the ear is extremely
+  // willing to hear a vowel.
+  for (const [centre, q, level] of [
+    [720, 7, 1],
+    [1240, 9, 0.6],
+    [2500, 10, 0.25],
+  ] as const) {
+    const formant = ctx.createBiquadFilter();
+    formant.type = 'bandpass';
+    formant.frequency.value = centre;
+    formant.Q.value = q;
+
+    const trim = ctx.createGain();
+    trim.gain.value = level;
+    formant.connect(trim).connect(gain);
+
+    const osc = ctx.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.value = freq;
+    osc.connect(formant);
+    osc.start(time);
+    osc.stop(time + length + 0.2);
+  }
+}
+
+function riser({ ctx, destination, time, velocity, duration }: VoiceContext) {
+  const length = Math.min(12, Math.max(0.5, duration));
+
+  // A riser is a transition, so it swells into the downbeat rather than
+  // starting loud: the shape is the effect.
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, velocity * 0.22), time + length);
+  gain.gain.exponentialRampToValueAtTime(0.0001, time + length + 0.06);
+  gain.gain.setValueAtTime(0, time + length + 0.07);
+  gain.connect(destination);
+
+  const sweep = ctx.createBiquadFilter();
+  sweep.type = 'bandpass';
+  sweep.Q.value = 2.2;
+  sweep.frequency.setValueAtTime(320, time);
+  sweep.frequency.exponentialRampToValueAtTime(9000, time + length);
+  sweep.connect(gain);
+
+  noiseSource(ctx, time, length + 0.1).connect(sweep);
+
+  // A rising tone under the noise gives it a pitch to follow, which is what
+  // makes a riser feel like it is arriving somewhere.
+  const osc = ctx.createOscillator();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(180, time);
+  osc.frequency.exponentialRampToValueAtTime(1400, time + length);
+  const oscGain = ctx.createGain();
+  oscGain.gain.value = 0.13;
+  osc.connect(oscGain).connect(gain);
+  osc.start(time);
+  osc.stop(time + length + 0.1);
+}
+
+function impact({ ctx, destination, time, velocity }: VoiceContext) {
+  // The downbeat hit after a riser: a deep boom plus a broadband slam.
+  const boom = decayEnvelope(ctx, time, velocity * 0.85, 1.4, 0.004);
+  boom.connect(destination);
+
+  const osc = ctx.createOscillator();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(120, time);
+  osc.frequency.exponentialRampToValueAtTime(32, time + 0.5);
+  osc.connect(boom);
+  osc.start(time);
+  osc.stop(time + 1.5);
+
+  const slam = decayEnvelope(ctx, time, velocity * 0.3, 0.9, 0.002);
+  slam.connect(destination);
+  const tone = ctx.createBiquadFilter();
+  tone.type = 'lowpass';
+  tone.frequency.setValueAtTime(6000, time);
+  tone.frequency.exponentialRampToValueAtTime(400, time + 0.6);
+  noiseSource(ctx, time, 1).connect(tone).connect(slam);
+}
+
+function reverse({ ctx, destination, time, velocity, duration }: VoiceContext) {
+  const length = Math.min(4, Math.max(0.4, duration));
+
+  // Swelling into the note rather than decaying away from it is the whole
+  // trick — played forwards this is just a cymbal.
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.0001, time);
+  gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, velocity * 0.3), time + length);
+  gain.gain.linearRampToValueAtTime(0, time + length + 0.02);
+  gain.connect(destination);
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.setValueAtTime(2200, time);
+  filter.frequency.exponentialRampToValueAtTime(7000, time + length);
+
+  const peak = ctx.createBiquadFilter();
+  peak.type = 'peaking';
+  peak.frequency.value = 9000;
+  peak.gain.value = 6;
+
+  noiseSource(ctx, time, length + 0.1).connect(filter).connect(peak).connect(gain);
+}
+
 /* -------------------------------------------------------------------------- */
 
 const VOICES: Record<InstrumentId, (voice: VoiceContext) => void> = {
@@ -749,6 +937,11 @@ const VOICES: Record<InstrumentId, (voice: VoiceContext) => void> = {
   skank,
   horn,
   siren,
+  flute,
+  chop,
+  riser,
+  impact,
+  reverse,
 };
 
 /** Schedules one note. Safe to call ahead of time — everything is time-stamped. */

@@ -37,7 +37,12 @@ export type InstrumentId =
   | 'bell'
   | 'skank'
   | 'horn'
-  | 'siren';
+  | 'siren'
+  | 'flute'
+  | 'chop'
+  | 'riser'
+  | 'impact'
+  | 'reverse';
 
 export type TrackKind = 'drum' | 'synth' | 'audio';
 
@@ -60,6 +65,15 @@ export type Note = {
    * transition, and it is optional so older saved projects still parse.
    */
   slideFrom?: number;
+  /**
+   * Timing offset in fractions of a step, roughly −0.5 to 0.5.
+   *
+   * The grid is sixteenths, so a part quantised onto it loses every bit of the
+   * push and drag that made it feel human. This carries a slice of the original
+   * deviation back, which is what lets a transcribed performance keep its feel
+   * instead of arriving robotically on the grid.
+   */
+  micro?: number;
 };
 
 export type TrackEffects = {
@@ -178,6 +192,11 @@ export const INSTRUMENTS: {
   { id: 'skank', name: 'Skank', kind: 'synth', hue: 130, defaultPitch: 64 },
   { id: 'horn', name: 'Horn stab', kind: 'synth', hue: 38, defaultPitch: 62 },
   { id: 'siren', name: 'Siren', kind: 'synth', hue: 350, defaultPitch: 72 },
+  { id: 'flute', name: 'Flute', kind: 'synth', hue: 176, defaultPitch: 74 },
+  { id: 'chop', name: 'Vocal chop', kind: 'synth', hue: 300, defaultPitch: 69 },
+  { id: 'riser', name: 'Riser', kind: 'synth', hue: 210, defaultPitch: 60 },
+  { id: 'impact', name: 'Impact', kind: 'drum', hue: 4, defaultPitch: 36 },
+  { id: 'reverse', name: 'Reverse cymbal', kind: 'drum', hue: 190, defaultPitch: 60 },
 ];
 
 export function instrumentInfo(id: InstrumentId) {

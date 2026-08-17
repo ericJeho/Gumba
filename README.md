@@ -55,6 +55,7 @@ the first note, and the studio keeps working offline.
 | **Channel rack** | FL-style 16-steps-per-bar grid. Click or drag to paint a run. Mute, solo, delete, add channel |
 | **Piano roll** | Click to place, drag a note's right edge to lengthen, click the keys to audition. Every note is a focusable element with its own label |
 | **Mixer** | Per channel: low/mid/high EQ, filter, compressor, reverb and delay sends, pan, fader, live meter. The master strip pins to the right edge and carries the mastering chain |
+| **Beat** | Beatbox, tap or hum an idea and it becomes a full arrangement. See below |
 | **Generate** | Chord progressions, melodies, basslines, genre drum patterns and 808 lines in the key you pick |
 | **Samples** | Synthesised one-shots by pack, plus one-click genre kits. Audition, add as a channel, or export the WAV |
 | **Record** | Microphone takes via `MediaRecorder`, with an input meter and per-take download |
@@ -96,6 +97,17 @@ channels at unity reliably produces those transients, and the result is an
 export pinned at full scale. The sum bus is trimmed first and the output gain
 restores the level afterwards.
 
+**Long exports render in slices.** Every voice scheduled into an
+`OfflineAudioContext` stays in its graph for the whole render, and each render
+quantum visits every node — so a single-pass render costs roughly
+(notes × duration), which is quadratic in the length of the track. A full
+two-and-a-quarter-minute arrangement did not finish in ten minutes. Rendering in
+twenty-second slices and overlap-adding them brings that to about a minute. Each
+slice carries a tail sized from the project's own longest note plus the reverb
+and release, so nothing is truncated at a seam; the master chain then runs once
+over the summed mix, because limiting each slice separately and adding their
+tails produces a sum above the ceiling.
+
 ### 808s, hip-hop and dancehall
 
 The 808 is a real instrument here rather than a pitched-up kick: a driven sine
@@ -114,6 +126,53 @@ reggaeton/dembow**, house, afrobeats, drum & bass and pop. The dancehall and
 reggaeton snares sit on the displaced dembow accents rather than a straight
 backbeat, which is the difference between the riddim and pop — there is a test
 guarding exactly that.
+
+### Beat → track
+
+Record yourself beatboxing, tapping or humming, and the studio reads the idea
+out of the audio and builds a finished instrumental from it: modern Afro-fusion
+crossed with dancehall and trap, in A natural minor, across ten sections from
+intro to outro.
+
+`src/daw/analyse.ts` does four things to the recording, all of it signal
+processing rather than a model, and all of it on your machine:
+
+- **Onsets** from spectral flux — the frame-to-frame *rise* in energy. A
+  percussive hit is a broadband jump, which is far more reliable than a rise in
+  amplitude. Frames are timestamped at their centre, not their start; timing
+  them from the start puts every hit about 12 ms early, and the whole
+  arrangement inherits the rush.
+- **Tempo** by scoring candidate beat periods against every onset, then folding
+  the winner into 96–104 BPM. Tempo is ambiguous by octave — the same pattern is
+  equally 50 and 100 BPM — so the target range is what resolves it.
+- **Which drum each hit is imitating**, from which band the energy *arrived* in.
+  Classifying by which band is loudest fails the moment anyone hums while they
+  beatbox: the sustained note is louder than any transient, so every hit comes
+  back a kick. Measuring the rise isolates what the hit added. There is a test
+  for exactly that case.
+- **Pitch** with YIN's cumulative mean normalised difference function. Plain
+  autocorrelation is the obvious choice and a trap: correlation at twice the
+  period is just as strong as at the period, so a hummed A3 returns a jitter of
+  A3, A2 and D2. YIN takes the *first* dip below a threshold rather than the
+  best one anywhere, which is what pins the octave.
+
+`src/daw/arrange.ts` then expands it. Everything in the arrangement comes from
+the recording: the drums are your hits, the lead is your hum, the bass follows
+your kicks, the fills are built from your accents. It cannot wander off into a
+melody you did not play, because it has no source of melody but yours.
+
+Two constraints are load-bearing:
+
+**Nothing quantises the feel away.** Notes carry a `micro` offset — a slice of
+the original timing deviation, kept when the hit is snapped to the grid — and
+the performance's own shuffle is measured and applied as project swing. A
+sixteenth grid on its own would throw away everything that made it human.
+
+**No chords.** Nothing stacks a triad and nothing implies a progression. The pad
+holds a root and a fifth, which has no third and so commits to neither major nor
+minor; every other pitched part is a single line; the bass moves as a bassline
+rather than as the root of an implied chord. Every pitch is snapped into A
+natural minor. All three are covered by tests.
 
 ### The sample library
 
@@ -288,7 +347,8 @@ Stated plainly rather than stubbed and left to look finished:
 - **Email and SMS.** Contact messages are validated, not sent.
 - **A generative model.** The studio's generators are music theory, not a trained model, and the panel says so. Nothing calls out to an inference API, which is what keeps the studio free, offline and instant.
 - **Cloud collaboration.** Soundtrap's shared-session model needs a server and accounts; this stays local-first instead. Projects move as files.
-- **Audio-file import.** Only the microphone recorder brings audio in. The sample library is synthesised, so there is no loader for a .wav you already own.
+- **Audio-file import as a track.** Audio comes in through the microphone recorder, and Beat → track will read a file you drop on it — but the file is analysed, not placed on the timeline. There is no audio-clip track.
+- **Polyphonic transcription.** Pitch tracking is monophonic, which is the right shape for a hum but means it cannot read a chord you play at it.
 - **Recorded samples.** Every one-shot is generated. That is what makes the library free of licensing, and it is also why nothing in it carries the character of a real room or a real 808 through a real desk.
 - **Three.js and GSAP.** Framer Motion plus canvas covers the motion brief at a fraction of the bundle cost, which the performance target made the better trade.
 

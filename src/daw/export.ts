@@ -60,25 +60,49 @@ function secondsPerStep(bpm: number) {
   return 60 / bpm / 4;
 }
 
+/** Chunk length for long renders. See renderProject. */
+const CHUNK_SECONDS = 20;
+
+/** The reverb IR's length, plus the longest envelope release any voice uses. */
+const REVERB_TAIL = 2.6;
+const RELEASE_TAIL = 1.5;
+
 /**
- * Renders the whole project offline.
+ * How long a slice must keep rendering after its last note starts.
  *
- * A tail is appended so reverb, delay repeats and long release envelopes finish
- * inside the file instead of being cut off at the final bar line.
+ * Measured from the project rather than fixed, because the answer depends
+ * entirely on what is in it: a four-bar drum sketch needs about four seconds,
+ * while a pad held for two bars is still releasing eight seconds later. A tail
+ * that is too short truncates whatever is still ringing, and the truncation
+ * lands exactly on a slice boundary — an audible click every twenty seconds.
  */
-export async function renderProject(project: Project, tailSeconds = 2.5): Promise<AudioBuffer> {
-  const spb = secondsPerStep(project.bpm);
-  const totalSteps = project.bars * STEPS_PER_BAR;
-  const duration = totalSteps * spb + tailSeconds;
-  const sampleRate = 44100;
+function tailFor(project: Project): number {
+  const spb = 60 / project.bpm / 4;
+  let longest = 0;
 
-  const ctx = new OfflineAudioContext(2, Math.ceil(duration * sampleRate), sampleRate);
-  const master = buildMaster(ctx, ctx.destination, project.master);
+  for (const track of project.tracks) {
+    for (const note of track.notes) longest = Math.max(longest, note.length * spb);
+  }
 
-  // Sends are per-project, matching the live engine's routing.
+  return Math.min(14, longest + RELEASE_TAIL + REVERB_TAIL);
+}
+
+/**
+ * Builds the send buses and every track's strip into a context, and returns a
+ * per-track input node to schedule voices into.
+ */
+function buildGraph(ctx: OfflineAudioContext, project: Project) {
+  // No master chain here: slices are rendered dry and the master runs once
+  // over the summed result. Limiting each slice separately and then adding
+  // their tails together produces a sum above the ceiling — which is exactly
+  // how the first version of this managed to clip a limited mix.
+  const sum = ctx.createGain();
+  sum.connect(ctx.destination);
+  const master = { input: sum };
+
   const reverb = ctx.createConvolver();
-  const irLength = Math.floor(sampleRate * 2.4);
-  const ir = ctx.createBuffer(2, irLength, sampleRate);
+  const irLength = Math.floor(ctx.sampleRate * 2.4);
+  const ir = ctx.createBuffer(2, irLength, ctx.sampleRate);
   for (let channel = 0; channel < 2; channel += 1) {
     const channelData = ir.getChannelData(channel);
     for (let i = 0; i < irLength; i += 1) {
@@ -100,6 +124,7 @@ export async function renderProject(project: Project, tailSeconds = 2.5): Promis
   delay.connect(delayTone).connect(feedback).connect(delay);
   delayTone.connect(master.input);
 
+  const inputs = new Map<string, GainNode>();
   const anySoloed = project.tracks.some((track) => track.soloed);
 
   for (const track of project.tracks) {
@@ -153,15 +178,47 @@ export async function renderProject(project: Project, tailSeconds = 2.5): Promis
     delaySend.gain.value = track.effects.delay;
     volume.connect(delaySend).connect(delay);
 
+    inputs.set(track.id, input);
+  }
+
+  return inputs;
+}
+
+/**
+ * Renders one slice of the project.
+ *
+ * Only notes *starting* inside the slice are scheduled. Anything that started
+ * earlier and is still ringing arrives through the previous slice's tail, which
+ * the caller overlaps into this one.
+ */
+async function renderSlice(
+  project: Project,
+  from: number,
+  to: number,
+  sampleRate: number,
+  tail: number,
+): Promise<AudioBuffer> {
+  const spb = 60 / project.bpm / 4;
+  const length = Math.ceil((to - from + tail) * sampleRate);
+
+  const ctx = new OfflineAudioContext(2, length, sampleRate);
+  const inputs = buildGraph(ctx, project);
+
+  for (const track of project.tracks) {
+    const input = inputs.get(track.id);
+    if (!input) continue;
+
     for (const note of track.notes) {
       // Swing has to match the live scheduler exactly, or the exported file
       // grooves differently from what was played back.
       const swing = note.step % 2 === 1 ? spb * project.swing : 0;
+      const time = note.step * spb + swing + (note.micro ?? 0) * spb;
+      if (time < from || time >= to) continue;
 
       playVoice(track.instrument, {
         ctx,
         destination: input,
-        time: note.step * spb + swing,
+        time: time - from,
         pitch: note.pitch,
         velocity: note.velocity,
         duration: Math.max(0.05, note.length * spb),
@@ -171,6 +228,81 @@ export async function renderProject(project: Project, tailSeconds = 2.5): Promis
   }
 
   return ctx.startRendering();
+}
+
+/**
+ * Runs a finished mix through the master chain in a single pass.
+ *
+ * Separate from the slice renders so the glue compressor and the limiter see
+ * the whole track, exactly as they do live. It is one pass over the audio
+ * through about eight nodes, so it costs a fraction of a slice render.
+ */
+async function applyMaster(buffer: AudioBuffer, project: Project): Promise<AudioBuffer> {
+  const ctx = new OfflineAudioContext(2, buffer.length, buffer.sampleRate);
+  const master = buildMaster(ctx, ctx.destination, project.master);
+
+  const source = ctx.createBufferSource();
+  source.buffer = buffer;
+  source.connect(master.input);
+  source.start(0);
+
+  return ctx.startRendering();
+}
+
+/**
+ * Renders the whole project offline.
+ *
+ * Long projects are rendered in slices and overlap-added rather than in one
+ * pass. The reason is a real limit rather than tidiness: every voice scheduled
+ * into an OfflineAudioContext stays in its graph for the entire render, and
+ * each render quantum visits every node in the graph — so a single-pass render
+ * costs roughly (notes × duration), which is quadratic in the length of the
+ * track. Measured on a full arrangement that is the difference between about
+ * twenty seconds and several minutes.
+ *
+ * Each slice is rendered with a tail long enough for the reverb and the longest
+ * release, and that tail is summed into the start of the next slice. Because
+ * the tail carries the decaying response of everything in the slice, the seams
+ * are arithmetically exact rather than crossfaded.
+ *
+ * A tail is appended at the end too, so the final bar's reverb finishes inside
+ * the file instead of stopping at the bar line.
+ */
+export async function renderProject(project: Project, tailSeconds?: number): Promise<AudioBuffer> {
+  const tail = tailSeconds ?? tailFor(project);
+  const spb = 60 / project.bpm / 4;
+  const totalSteps = project.bars * STEPS_PER_BAR;
+  const musicSeconds = totalSteps * spb;
+  const sampleRate = 44100;
+  const totalFrames = Math.ceil((musicSeconds + tail) * sampleRate);
+
+  // Short projects render in one pass — slicing them would only add overhead.
+  if (musicSeconds <= CHUNK_SECONDS * 1.5) {
+    return applyMaster(await renderSlice(project, 0, musicSeconds, sampleRate, tail), project);
+  }
+
+  const output = new OfflineAudioContext(2, totalFrames, sampleRate).createBuffer(
+    2,
+    totalFrames,
+    sampleRate,
+  );
+
+  for (let from = 0; from < musicSeconds; from += CHUNK_SECONDS) {
+    const to = Math.min(from + CHUNK_SECONDS, musicSeconds);
+    const slice = await renderSlice(project, from, to, sampleRate, tail);
+    const offset = Math.round(from * sampleRate);
+
+    for (let channel = 0; channel < 2; channel += 1) {
+      const target = output.getChannelData(channel);
+      const source = slice.getChannelData(channel);
+      const count = Math.min(source.length, target.length - offset);
+
+      // Summed, not written: the previous slice's tail is already sitting here.
+      for (let i = 0; i < count; i += 1) target[offset + i] = target[offset + i]! + source[i]!;
+    }
+  }
+
+  return applyMaster(output, project);
 }
 
 /**

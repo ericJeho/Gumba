@@ -455,7 +455,10 @@ export class AudioEngine {
           playVoice(track.instrument, {
             ctx: this.ctx,
             destination: strip.input,
-            time,
+            // Micro-timing is added here rather than folded into the step, so a
+            // note stays on its grid position for editing while playing a
+            // fraction early or late.
+            time: time + (note.micro ?? 0) * spb,
             pitch: note.pitch,
             velocity: note.velocity,
             duration: Math.max(0.05, note.length * spb),
