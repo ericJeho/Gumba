@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import { brand } from '@/config/brand';
 import { jsonLd, localBusinessSchema } from '@/lib/seo';
 import { BrandStyle } from '@/components/layout/BrandStyle';
@@ -95,6 +96,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         </PreferencesProvider>
 
         <ServiceWorker />
+        <SpeedInsights />
       </body>
     </html>
   );
